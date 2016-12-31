@@ -7,11 +7,13 @@ public class GameManager : MonoBehaviour
     public int width = 8;
     public int height = 16;
 
+    public GameObject pipe;
+    public GameObject piperCorner;
     public Virus[] virusses;
     public PillHolder pillHolder;
     // public Pill[] pills;
 
-    private Vector2 pillSpawnLocation = new Vector2(4, 15);
+    private Vector2 pillSpawnLocation = new Vector2(3, 15);
 
     private PillHolder activePillHolder;
 
@@ -21,6 +23,14 @@ public class GameManager : MonoBehaviour
 
     // Use this for initialization
     void Start()
+    {
+        SetUpBoardContent();
+        SetUpBoardBorder();
+
+        InvokeRepeating("Tick", 0, 1);
+    }
+
+    private void SetUpBoardContent()
     {
         grid = new Square[width, height];
 
@@ -35,8 +45,49 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+    }
 
-        InvokeRepeating("Tick", 0, 1);
+    private void SetUpBoardBorder()
+    {
+        // Horizontal pipes
+        for (int i = 0; i < width; i++)
+        {
+            GameObject.Instantiate(pipe, new Vector3(i, -1, 0), Quaternion.AngleAxis(90, Vector3.forward));
+
+            if(i < 2 || i > 5)
+            {
+                GameObject.Instantiate(pipe, new Vector3(i, height, 0), Quaternion.AngleAxis(90, Vector3.forward));
+            }
+        }
+
+        // Vertical pipes
+        for (int i = 0; i < height; i++)
+        {
+            GameObject.Instantiate(pipe, new Vector3(-1, i, 0), Quaternion.identity);
+            GameObject.Instantiate(pipe, new Vector3(width, i, 0), Quaternion.identity);
+        }
+
+        // Corners
+        GameObject.Instantiate(piperCorner, new Vector3(-1, -1, 0), Quaternion.identity);
+        GameObject.Instantiate(piperCorner, new Vector3(-1, height, 0), Quaternion.AngleAxis(270, Vector3.forward));
+        GameObject.Instantiate(piperCorner, new Vector3(width, -1, 0), Quaternion.AngleAxis(90, Vector3.forward));
+        GameObject.Instantiate(piperCorner, new Vector3(width, height, 0), Quaternion.AngleAxis(180, Vector3.forward));
+
+        // Top opening
+        GameObject.Instantiate(piperCorner, new Vector3(2, height, 0), Quaternion.AngleAxis(90, Vector3.forward));
+        GameObject.Instantiate(piperCorner, new Vector3(5, height, 0), Quaternion.identity);
+
+        GameObject.Instantiate(pipe, new Vector3(2, height + 1, 0), Quaternion.identity);
+        GameObject.Instantiate(pipe, new Vector3(5, height + 1, 0), Quaternion.identity);
+
+        GameObject.Instantiate(piperCorner, new Vector3(2, height + 2, 0), Quaternion.AngleAxis(180, Vector3.forward));
+        GameObject.Instantiate(piperCorner, new Vector3(5, height + 2, 0), Quaternion.AngleAxis(270, Vector3.forward));
+
+        GameObject.Instantiate(piperCorner, new Vector3(1, height + 2, 0), Quaternion.identity);
+        GameObject.Instantiate(piperCorner, new Vector3(6, height + 2, 0), Quaternion.AngleAxis(90, Vector3.forward));
+
+         GameObject.Instantiate(pipe, new Vector3(1, height + 3, 0), Quaternion.identity);
+        GameObject.Instantiate(pipe, new Vector3(6, height + 3, 0), Quaternion.identity);
     }
 
     // todo doesn't really need to happen in update since we only tick once every second
@@ -92,13 +143,6 @@ public class GameManager : MonoBehaviour
     {
         AddSettledPillToGrid();
         activePillHolder = null;
-        // List<Square> matches = CheckForMatches();
-        // if (matches.Count > 0)
-        // {
-        //     print("we have matches!!");
-        //     RemoveMatches(matches);
-        //     UpdateLoosePills();
-        // }
     }
 
     private void AddSettledPillToGrid()
@@ -211,7 +255,7 @@ public class GameManager : MonoBehaviour
 
                 if (pillPart.IsSingle())
                 {
-                    if(SquareAtLocationIsFallingPillPart(i, j) && !fallingPills.Contains(pillPart))
+                    if (SquareAtLocationIsFallingPillPart(i, j) && !fallingPills.Contains(pillPart))
                     {
                         fallingPills.Add(pillPart);
                     }
@@ -231,7 +275,7 @@ public class GameManager : MonoBehaviour
                         bool mainPillPartIsFalling = SquareAtLocationIsFallingPillPart(i, j);
                         bool secondaryPillPartIsFalling = SquareAtLocationIsFallingPillPart((int)counterPart.transform.position.x, j);
 
-                        if(mainPillPartIsFalling && secondaryPillPartIsFalling)
+                        if (mainPillPartIsFalling && secondaryPillPartIsFalling)
                         {
                             if (!fallingPills.Contains(pillPart))
                             {
@@ -246,14 +290,14 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-        
+
     }
 
     private bool SquareAtLocationIsFallingPillPart(int x, int y)
     {
         Square squareBelow = grid[x, y - 1];
 
-        if(squareBelow == null)
+        if (squareBelow == null)
         {
             return true;
         }
@@ -266,12 +310,12 @@ public class GameManager : MonoBehaviour
     {
         foreach (PillPart pillPart in fallingPills)
         {
-            int currentX = (int) pillPart.transform.position.x;
-            int currentY = (int) pillPart.transform.position.y;
+            int currentX = (int)pillPart.transform.position.x;
+            int currentY = (int)pillPart.transform.position.y;
 
             grid[currentX, currentY - 1] = pillPart;
             grid[currentX, currentY] = null;
-            
+
             pillPart.transform.position = new Vector2(currentX, currentY - 1);
 
         }
