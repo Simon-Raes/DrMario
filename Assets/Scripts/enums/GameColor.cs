@@ -1,0 +1,1 @@
+﻿public enum GameColor {RED, BLUE, YELLOW}; 
