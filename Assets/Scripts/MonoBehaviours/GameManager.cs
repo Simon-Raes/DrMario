@@ -54,9 +54,9 @@ public class GameManager : MonoBehaviour
         {
             GameObject.Instantiate(pipe, new Vector3(i, -1, 0), Quaternion.AngleAxis(90, Vector3.forward));
 
-            if(i < 2 || i > 5)
+            if (i < 2 || i > 5)
             {
-                GameObject.Instantiate(pipe, new Vector3(i, height, 0), Quaternion.AngleAxis(90, Vector3.forward));
+                GameObject.Instantiate(pipe, new Vector3(i, height, 0), Quaternion.AngleAxis(270, Vector3.forward));
             }
         }
 
@@ -64,7 +64,7 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < height; i++)
         {
             GameObject.Instantiate(pipe, new Vector3(-1, i, 0), Quaternion.identity);
-            GameObject.Instantiate(pipe, new Vector3(width, i, 0), Quaternion.identity);
+            GameObject.Instantiate(pipe, new Vector3(width, i, 0), Quaternion.AngleAxis(180, Vector3.forward));
         }
 
         // Corners
@@ -86,7 +86,7 @@ public class GameManager : MonoBehaviour
         GameObject.Instantiate(piperCorner, new Vector3(1, height + 2, 0), Quaternion.identity);
         GameObject.Instantiate(piperCorner, new Vector3(6, height + 2, 0), Quaternion.AngleAxis(90, Vector3.forward));
 
-         GameObject.Instantiate(pipe, new Vector3(1, height + 3, 0), Quaternion.identity);
+        GameObject.Instantiate(pipe, new Vector3(1, height + 3, 0), Quaternion.identity);
         GameObject.Instantiate(pipe, new Vector3(6, height + 3, 0), Quaternion.identity);
     }
 
@@ -110,7 +110,7 @@ public class GameManager : MonoBehaviour
         }
 
 
-        List<Square> matches = CheckForMatches();
+        HashSet<Square> matches = CheckForMatches();
         if (matches.Count > 0)
         {
             print("we have matches!!");
@@ -156,9 +156,9 @@ public class GameManager : MonoBehaviour
         grid[(int)pillPart.transform.position.x, (int)pillPart.transform.position.y] = pillPart;
     }
 
-    private List<Square> CheckForMatches()
+    private HashSet<Square> CheckForMatches()
     {
-        List<Square> matches = new List<Square>();
+        HashSet<Square> matches = new HashSet<Square>();
         List<Square> currentlyCheckingSeries = new List<Square>();
 
         for (int i = 0; i < width; i++)
@@ -172,7 +172,7 @@ public class GameManager : MonoBehaviour
                 {
                     if (currentlyCheckingSeries.Count >= 4)
                     {
-                        matches.AddRange(currentlyCheckingSeries);
+                        matches.UnionWith(currentlyCheckingSeries);
                     }
 
                     currentlyCheckingSeries.Clear();
@@ -193,7 +193,7 @@ public class GameManager : MonoBehaviour
                         {
                             if (currentlyCheckingSeries.Count >= 4)
                             {
-                                matches.AddRange(currentlyCheckingSeries);
+                                matches.UnionWith(currentlyCheckingSeries);
                             }
 
                             currentlyCheckingSeries.Clear();
@@ -204,13 +204,70 @@ public class GameManager : MonoBehaviour
                 }
             }
 
+            if(currentlyCheckingSeries.Count > 0)
+            {
+                matches.UnionWith(currentlyCheckingSeries);
+            }
+
+            currentlyCheckingSeries.Clear();
+        }
+
+
+        // TODO clean up this duplicate code
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                Square currentSquare = grid[j, i];
+
+                if (currentSquare == null)
+                {
+                    if (currentlyCheckingSeries.Count >= 4)
+                    {
+                        matches.UnionWith(currentlyCheckingSeries);
+                    }
+
+                    currentlyCheckingSeries.Clear();
+                }
+                else
+                {
+                    if (currentlyCheckingSeries.Count == 0)
+                    {
+                        currentlyCheckingSeries.Add(currentSquare);
+                    }
+                    else
+                    {
+                        if (currentlyCheckingSeries[0].gameColor == currentSquare.gameColor)
+                        {
+                            currentlyCheckingSeries.Add(currentSquare);
+                        }
+                        else
+                        {
+                            if (currentlyCheckingSeries.Count >= 4)
+                            {
+                                matches.UnionWith(currentlyCheckingSeries);
+                            }
+
+                            currentlyCheckingSeries.Clear();
+
+                            currentlyCheckingSeries.Add(currentSquare);
+                        }
+                    }
+                }
+            }
+
+            if(currentlyCheckingSeries.Count > 0)
+            {
+                matches.UnionWith(currentlyCheckingSeries);
+            }
+
             currentlyCheckingSeries.Clear();
         }
 
         return matches;
     }
 
-    private void RemoveMatches(List<Square> matches)
+    private void RemoveMatches(HashSet<Square> matches)
     {
         foreach (Square item in matches)
         {
