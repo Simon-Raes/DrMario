@@ -27,11 +27,10 @@ public class GameManager : MonoBehaviour
     private List<PillPart> fallingPills = new List<PillPart>();
 
     private const float TICK_RATE_MILLIS = 600;
+    private const float TICK_RATE_PILLS_FALLING_MILLIS = 150;
     private const int MIN_TILES_IN_MATCH = 4;
     private const int MAX_VIRUS_HEIGHT = 10;
     private const int SQUARE_VIRUS_CHANCE = 30;
-
-    // todo level finished and starting the next, harder level
 
 
     private int currentLevel;
@@ -39,27 +38,7 @@ public class GameManager : MonoBehaviour
 
     private bool gameOver;
     private bool gameWon;
-
-
-
-    // void OnEnable()
-    // {
-    //     //Tell our 'OnLevelFinishedLoading' function to start listening for a scene change as soon as this script is enabled.
-    //     SceneManager.sceneLoaded += OnLevelFinishedLoading;
-    // }
-
-    // void OnDisable()
-    // {
-    //     //Tell our 'OnLevelFinishedLoading' function to stop listening for a scene change as soon as this script is disabled. Remember to always have an unsubscription for every delegate you subscribe to!
-    //     SceneManager.sceneLoaded -= OnLevelFinishedLoading;
-    // }
-
-    // void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode)
-    // {
-    //     StateHolder.level++;
-    //     // currentLevel++;
-    //     levelText.text = "Level " + StateHolder.level;
-    // }
+    private bool loosePillsAreFalling;
 
     void Start()
     {
@@ -68,8 +47,6 @@ public class GameManager : MonoBehaviour
 
         CreateUpcomingPill();
 
-        // todo make this a coroutine so we can speed up tickrate when it's just pill parts falling
-        // InvokeRepeating("Tick", 0, TICK_RATE_MILLIS / 1000f);
         StartCoroutine(GameLoop());
     }
 
@@ -124,7 +101,8 @@ public class GameManager : MonoBehaviour
         while (!gameOver && !gameWon)
         {
             Tick();
-            yield return new WaitForSeconds(TICK_RATE_MILLIS / 1000f);
+            float tickRate = loosePillsAreFalling ? TICK_RATE_PILLS_FALLING_MILLIS : TICK_RATE_MILLIS;
+            yield return new WaitForSeconds(tickRate / 1000f);
         }
     }
 
@@ -141,8 +119,13 @@ public class GameManager : MonoBehaviour
 
         if (fallingPills.Count > 0)
         {
+            loosePillsAreFalling = true;
             DropLoosePills();
             return;
+        }
+        else
+        {
+            loosePillsAreFalling = false;
         }
 
         HashSet<Square> matches = CheckForMatches();
@@ -467,7 +450,6 @@ public class GameManager : MonoBehaviour
             grid[currentX, currentY] = null;
 
             pillPart.transform.position = new Vector2(currentX, currentY - 1);
-
         }
     }
 }
