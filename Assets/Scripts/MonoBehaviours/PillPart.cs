@@ -4,8 +4,17 @@ using UnityEngine;
 
 public class PillPart : Square
 {
+	public Sprite singlePillSprite;
+
+	private SpriteRenderer spriteRenderer;
+
     private PillHolder pillHolder;
     private bool single;
+	
+	void Start()
+	{
+		spriteRenderer = GetComponent<SpriteRenderer>();
+	}
 
     public void SetPillHolder(PillHolder pillHolder)
     {
@@ -15,7 +24,8 @@ public class PillPart : Square
     public void SetSingle()
     {
         single = true;
-        // TODO update the sprite to a single pill instead of pill-half
+        
+		spriteRenderer.sprite = singlePillSprite;
     }
 
     public bool IsSingle()

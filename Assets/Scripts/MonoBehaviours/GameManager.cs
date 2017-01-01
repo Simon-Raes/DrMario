@@ -3,31 +3,46 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-
     public int width = 8;
     public int height = 16;
+    private int maxVirusHeight = 10;
 
     public GameObject pipe;
     public GameObject piperCorner;
+
     public Virus[] virusses;
     public PillHolder pillHolder;
-    // public Pill[] pills;
 
     private Vector2 pillSpawnLocation = new Vector2(3, 15);
 
+    private PillHolder previewPillHolder;
     private PillHolder activePillHolder;
 
     private Square[,] grid;
 
-    List<PillPart> fallingPills = new List<PillPart>();
+    private List<PillPart> fallingPills = new List<PillPart>();
 
-    // Use this for initialization
+    private const float TICK_RATE_MILLIS = 600;
+    private const int MIN_TILES_IN_MATCH = 4;
+
+    // TODO add UI to show the upcoming pill
+
+    
+
     void Start()
     {
         SetUpBoardContent();
         SetUpBoardBorder();
 
-        InvokeRepeating("Tick", 0, 1);
+        // previewPillHolder = GameObject.Instantiate(pillHolder, new Vector2(14, 14), Quaternion.identity) as PillHolder;
+
+        // todo make this a coroutine so we can speed up tickrate when it's just pills falling
+        InvokeRepeating("Tick", 0, TICK_RATE_MILLIS / 1000f);
+    }
+
+    private void CreateUpcomingPill()
+    {
+
     }
 
     private void SetUpBoardContent()
@@ -36,7 +51,7 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < width; i++)
         {
-            for (int j = 0; j < height / 2; j++)
+            for (int j = 0; j < maxVirusHeight; j++)
             {
                 if (Random.Range(0, 100) < 30)
                 {
@@ -90,13 +105,9 @@ public class GameManager : MonoBehaviour
         GameObject.Instantiate(pipe, new Vector3(6, height + 3, 0), Quaternion.identity);
     }
 
-    // todo doesn't really need to happen in update since we only tick once every second
+    
     void Update()
     {
-        if (!activePillHolder)
-        {
-            // activePillHolder = GameObject.Instantiate(pillHolder, pillSpawnLocation, Quaternion.identity) as PillHolder;
-        }
     }
 
     private void Tick()
@@ -113,7 +124,6 @@ public class GameManager : MonoBehaviour
         HashSet<Square> matches = CheckForMatches();
         if (matches.Count > 0)
         {
-            print("we have matches!!");
             RemoveMatches(matches);
             return;
         }
@@ -125,13 +135,23 @@ public class GameManager : MonoBehaviour
         }
         else
         {
+            // activePillHolder = previewPillHolder;
+            // activePillHolder.transform.position = pillSpawnLocation;
+            // activePillHolder.SetActive();
+
+            // CreateUpcomingPill();
             activePillHolder = GameObject.Instantiate(pillHolder, pillSpawnLocation, Quaternion.identity) as PillHolder;
         }
     }
 
+    public bool IsSquareFree(Vector2 vector)
+    {
+        return IsSquareFree((int)vector.x, (int)vector.y);
+    }
+
     public bool IsSquareFree(int x, int y)
     {
-        if (x < 0 || x >= width || y < 0)
+        if (x < 0 || x >= width || y < 0 || y >= height)
         {
             return false;
         }
@@ -170,7 +190,7 @@ public class GameManager : MonoBehaviour
 
                 if (currentSquare == null)
                 {
-                    if (currentlyCheckingSeries.Count >= 4)
+                    if (currentlyCheckingSeries.Count >= MIN_TILES_IN_MATCH)
                     {
                         matches.UnionWith(currentlyCheckingSeries);
                     }
@@ -191,7 +211,7 @@ public class GameManager : MonoBehaviour
                         }
                         else
                         {
-                            if (currentlyCheckingSeries.Count >= 4)
+                            if (currentlyCheckingSeries.Count >= MIN_TILES_IN_MATCH)
                             {
                                 matches.UnionWith(currentlyCheckingSeries);
                             }
@@ -204,7 +224,7 @@ public class GameManager : MonoBehaviour
                 }
             }
 
-            if(currentlyCheckingSeries.Count > 0)
+            if (currentlyCheckingSeries.Count >= MIN_TILES_IN_MATCH)
             {
                 matches.UnionWith(currentlyCheckingSeries);
             }
@@ -222,7 +242,7 @@ public class GameManager : MonoBehaviour
 
                 if (currentSquare == null)
                 {
-                    if (currentlyCheckingSeries.Count >= 4)
+                    if (currentlyCheckingSeries.Count >= MIN_TILES_IN_MATCH)
                     {
                         matches.UnionWith(currentlyCheckingSeries);
                     }
@@ -243,7 +263,7 @@ public class GameManager : MonoBehaviour
                         }
                         else
                         {
-                            if (currentlyCheckingSeries.Count >= 4)
+                            if (currentlyCheckingSeries.Count >= MIN_TILES_IN_MATCH)
                             {
                                 matches.UnionWith(currentlyCheckingSeries);
                             }
@@ -256,7 +276,7 @@ public class GameManager : MonoBehaviour
                 }
             }
 
-            if(currentlyCheckingSeries.Count > 0)
+            if (currentlyCheckingSeries.Count >= MIN_TILES_IN_MATCH)
             {
                 matches.UnionWith(currentlyCheckingSeries);
             }
@@ -308,8 +328,6 @@ public class GameManager : MonoBehaviour
 
                 PillPart pillPart = (PillPart)square;
 
-                print("checking pill part at " + i + ", " + j);
-
                 if (pillPart.IsSingle())
                 {
                     if (SquareAtLocationIsFallingPillPart(i, j) && !fallingPills.Contains(pillPart))
@@ -324,7 +342,30 @@ public class GameManager : MonoBehaviour
                     if (counterPart.transform.position.x == pillPart.transform.position.x)
                     {
                         // Vertically aligned full pill 
-                        // TODO handle this
+                        float pillPartY = pillPart.transform.position.y;
+                        float counterPartY = counterPart.transform.position.y;
+
+                        int lowestY = (int)Mathf.Min(pillPartY, counterPartY);
+
+                        if(lowestY == 0)
+                        {
+                            // Pill is on the floor, don't bother checking the rest
+                            continue;
+                        }
+
+                        bool pillIsfalling = SquareAtLocationIsFallingPillPart(i, lowestY);
+
+                        if (pillIsfalling)
+                        {
+                            if (!fallingPills.Contains(pillPart))
+                            {
+                                fallingPills.Add(pillPart);
+                            }
+                            if (!fallingPills.Contains(counterPart))
+                            {
+                                fallingPills.Add(counterPart);
+                            }
+                        }
                     }
                     else
                     {
