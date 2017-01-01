@@ -1,17 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
     public int width = 8;
     public int height = 16;
-    private int maxVirusHeight = 10;
+
 
     public GameObject pipe;
     public GameObject pipeCorner;
 
     public Virus[] virusses;
     public PillHolder pillHolder;
+    public Text levelText;
 
     private Vector2 pillSpawnLocation = new Vector2(3, 15);
 
@@ -24,7 +28,38 @@ public class GameManager : MonoBehaviour
 
     private const float TICK_RATE_MILLIS = 600;
     private const int MIN_TILES_IN_MATCH = 4;
+    private const int MAX_VIRUS_HEIGHT = 10;
+    private const int SQUARE_VIRUS_CHANCE = 30;
 
+    // todo level finished and starting the next, harder level
+
+
+    private int currentLevel;
+    private int numberOfVirusses;
+
+    private bool gameOver;
+    private bool gameWon;
+
+
+
+    // void OnEnable()
+    // {
+    //     //Tell our 'OnLevelFinishedLoading' function to start listening for a scene change as soon as this script is enabled.
+    //     SceneManager.sceneLoaded += OnLevelFinishedLoading;
+    // }
+
+    // void OnDisable()
+    // {
+    //     //Tell our 'OnLevelFinishedLoading' function to stop listening for a scene change as soon as this script is disabled. Remember to always have an unsubscription for every delegate you subscribe to!
+    //     SceneManager.sceneLoaded -= OnLevelFinishedLoading;
+    // }
+
+    // void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode)
+    // {
+    //     StateHolder.level++;
+    //     // currentLevel++;
+    //     levelText.text = "Level " + StateHolder.level;
+    // }
 
     void Start()
     {
@@ -34,7 +69,8 @@ public class GameManager : MonoBehaviour
         CreateUpcomingPill();
 
         // todo make this a coroutine so we can speed up tickrate when it's just pill parts falling
-        InvokeRepeating("Tick", 0, TICK_RATE_MILLIS / 1000f);
+        // InvokeRepeating("Tick", 0, TICK_RATE_MILLIS / 1000f);
+        StartCoroutine(GameLoop());
     }
 
     private void CreateUpcomingPill()
@@ -48,10 +84,11 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < width; i++)
         {
-            for (int j = 0; j < maxVirusHeight; j++)
+            for (int j = 0; j < MAX_VIRUS_HEIGHT; j++)
             {
-                if (Random.Range(0, 100) < 30)
+                if (Random.Range(0, 100) < SQUARE_VIRUS_CHANCE)
                 {
+                    numberOfVirusses++;
                     Vector2 position = new Vector2(i, j);
                     grid[i, j] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
                 }
@@ -67,10 +104,39 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown("return"))
+        {
+            if (gameWon)
+            {
+                // TODO go to next level
+                print("go to next level here");
+            }
+            else if (gameOver)
+            {
+                // TODO restart level or go back to menu
+                print("restart level here");
+            }
+        }
+    }
+
+    IEnumerator GameLoop()
+    {
+        while (!gameOver && !gameWon)
+        {
+            Tick();
+            yield return new WaitForSeconds(TICK_RATE_MILLIS / 1000f);
+        }
     }
 
     private void Tick()
     {
+        if (IsGameWon())
+        {
+            gameWon = true;
+            levelText.text = "You da man";
+            return;
+        }
+
         UpdateLoosePills();
 
         if (fallingPills.Count > 0)
@@ -79,7 +145,6 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-
         HashSet<Square> matches = CheckForMatches();
         if (matches.Count > 0)
         {
@@ -87,20 +152,44 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-
         if (activePillHolder)
         {
             activePillHolder.Tick();
         }
         else
         {
-            // Make the preview pill controllable and create a new preview pill
+            // TODO animate the preview pill becoming the active pill (real game throws the pill into the game)
             activePillHolder = previewPillHolder;
             activePillHolder.transform.position = pillSpawnLocation;
-            activePillHolder.SetControllable();
 
-            CreateUpcomingPill();
+            if (IsGameOver())
+            {
+                gameOver = true;
+                levelText.text = "GAME OVER";
+            }
+            else
+            {
+                activePillHolder.SetControllable();
+                CreateUpcomingPill();
+            }
         }
+    }
+
+    private bool IsGameWon()
+    {
+        return numberOfVirusses == 0;
+    }
+
+    private bool IsGameOver()
+    {
+        return !IsSquareFree(pillSpawnLocation);
+    }
+
+    private void GoToNextLevel()
+    {
+        print("you da man");
+        levelText.text = "you da man!";
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public bool IsSquareFree(Vector2 vector)
@@ -250,6 +339,11 @@ public class GameManager : MonoBehaviour
     {
         foreach (Square item in matches)
         {
+            if (item.GetType() == typeof(Virus))
+            {
+                numberOfVirusses--;
+            }
+
             GameObject.Destroy(item.gameObject);
         }
     }
@@ -347,7 +441,6 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-
     }
 
     private bool SquareAtLocationIsFallingPillPart(int x, int y)
