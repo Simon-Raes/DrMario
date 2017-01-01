@@ -6,7 +6,7 @@ public class PillHolder : MonoBehaviour
 {
     GameManager gameManager;
 
-    private bool active = true;
+    private bool active = false;
 
     public PillPart[] pillParts;
 
@@ -69,11 +69,11 @@ public class PillHolder : MonoBehaviour
             // looks and feels bad
             MoveDownOrSettle();
         }
-        else if (Input.GetKeyDown("x"))
+        else if (Input.GetKeyDown("z"))
         {
             RotateClockwise();
         }
-        else if (Input.GetKeyDown("c"))
+        else if (Input.GetKeyDown("x"))
         {
             RotateCounterClockwise();
         }
@@ -84,10 +84,10 @@ public class PillHolder : MonoBehaviour
         }
     }
 
-    // public void SetActive()
-    // {
-    //     active = true;
-    // }
+    public void SetControllable()
+    {
+        active = true;
+    }
 
     private bool CanMoveLeft()
     {

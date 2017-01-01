@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
     private int maxVirusHeight = 10;
 
     public GameObject pipe;
-    public GameObject piperCorner;
+    public GameObject pipeCorner;
 
     public Virus[] virusses;
     public PillHolder pillHolder;
@@ -25,24 +25,21 @@ public class GameManager : MonoBehaviour
     private const float TICK_RATE_MILLIS = 600;
     private const int MIN_TILES_IN_MATCH = 4;
 
-    // TODO add UI to show the upcoming pill
-
-    
 
     void Start()
     {
         SetUpBoardContent();
-        SetUpBoardBorder();
+        SetupBoardBorder();
 
-        // previewPillHolder = GameObject.Instantiate(pillHolder, new Vector2(14, 14), Quaternion.identity) as PillHolder;
+        CreateUpcomingPill();
 
-        // todo make this a coroutine so we can speed up tickrate when it's just pills falling
+        // todo make this a coroutine so we can speed up tickrate when it's just pill parts falling
         InvokeRepeating("Tick", 0, TICK_RATE_MILLIS / 1000f);
     }
 
     private void CreateUpcomingPill()
     {
-
+        previewPillHolder = GameObject.Instantiate(pillHolder, new Vector2(width + 5, height - 2), Quaternion.identity) as PillHolder;
     }
 
     private void SetUpBoardContent()
@@ -62,50 +59,12 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void SetUpBoardBorder()
+    private void SetupBoardBorder()
     {
-        // Horizontal pipes
-        for (int i = 0; i < width; i++)
-        {
-            GameObject.Instantiate(pipe, new Vector3(i, -1, 0), Quaternion.AngleAxis(90, Vector3.forward));
-
-            if (i < 2 || i > 5)
-            {
-                GameObject.Instantiate(pipe, new Vector3(i, height, 0), Quaternion.AngleAxis(270, Vector3.forward));
-            }
-        }
-
-        // Vertical pipes
-        for (int i = 0; i < height; i++)
-        {
-            GameObject.Instantiate(pipe, new Vector3(-1, i, 0), Quaternion.identity);
-            GameObject.Instantiate(pipe, new Vector3(width, i, 0), Quaternion.AngleAxis(180, Vector3.forward));
-        }
-
-        // Corners
-        GameObject.Instantiate(piperCorner, new Vector3(-1, -1, 0), Quaternion.identity);
-        GameObject.Instantiate(piperCorner, new Vector3(-1, height, 0), Quaternion.AngleAxis(270, Vector3.forward));
-        GameObject.Instantiate(piperCorner, new Vector3(width, -1, 0), Quaternion.AngleAxis(90, Vector3.forward));
-        GameObject.Instantiate(piperCorner, new Vector3(width, height, 0), Quaternion.AngleAxis(180, Vector3.forward));
-
-        // Top opening
-        GameObject.Instantiate(piperCorner, new Vector3(2, height, 0), Quaternion.AngleAxis(90, Vector3.forward));
-        GameObject.Instantiate(piperCorner, new Vector3(5, height, 0), Quaternion.identity);
-
-        GameObject.Instantiate(pipe, new Vector3(2, height + 1, 0), Quaternion.identity);
-        GameObject.Instantiate(pipe, new Vector3(5, height + 1, 0), Quaternion.identity);
-
-        GameObject.Instantiate(piperCorner, new Vector3(2, height + 2, 0), Quaternion.AngleAxis(180, Vector3.forward));
-        GameObject.Instantiate(piperCorner, new Vector3(5, height + 2, 0), Quaternion.AngleAxis(270, Vector3.forward));
-
-        GameObject.Instantiate(piperCorner, new Vector3(1, height + 2, 0), Quaternion.identity);
-        GameObject.Instantiate(piperCorner, new Vector3(6, height + 2, 0), Quaternion.AngleAxis(90, Vector3.forward));
-
-        GameObject.Instantiate(pipe, new Vector3(1, height + 3, 0), Quaternion.identity);
-        GameObject.Instantiate(pipe, new Vector3(6, height + 3, 0), Quaternion.identity);
+        BorderPlacer borderPlacer = new BorderPlacer(width, height, pipe, pipeCorner);
+        borderPlacer.CreateBorders();
     }
 
-    
     void Update()
     {
     }
@@ -135,12 +94,12 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            // activePillHolder = previewPillHolder;
-            // activePillHolder.transform.position = pillSpawnLocation;
-            // activePillHolder.SetActive();
+            // Make the preview pill controllable and create a new preview pill
+            activePillHolder = previewPillHolder;
+            activePillHolder.transform.position = pillSpawnLocation;
+            activePillHolder.SetControllable();
 
-            // CreateUpcomingPill();
-            activePillHolder = GameObject.Instantiate(pillHolder, pillSpawnLocation, Quaternion.identity) as PillHolder;
+            CreateUpcomingPill();
         }
     }
 
@@ -347,7 +306,7 @@ public class GameManager : MonoBehaviour
 
                         int lowestY = (int)Mathf.Min(pillPartY, counterPartY);
 
-                        if(lowestY == 0)
+                        if (lowestY == 0)
                         {
                             // Pill is on the floor, don't bother checking the rest
                             continue;
