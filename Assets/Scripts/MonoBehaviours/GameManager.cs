@@ -8,16 +8,20 @@ public class GameManager : MonoBehaviour
 {
     public int width = 8;
     public int height = 16;
-
-
     public GameObject pipe;
     public GameObject pipeCorner;
-
     public Virus[] virusses;
     public PillHolder pillHolder;
     public Text levelText;
 
-    private Vector2 pillSpawnLocation = new Vector2(3, 15);
+    private const float TICK_RATE_MILLIS = 600;
+    private const float TICK_RATE_PILLS_FALLING_MILLIS = 150;
+    private const int MIN_TILES_IN_MATCH = 4;
+    private const int MIN_DIFFICULTY_MAX_VIRUS_HEIGHT = 10;
+    private const int MAX_DIFFICULTY_MAX_VIRUS_HEIGHT = 13;
+    private const int SQUARE_VIRUS_CHANCE = 30;
+
+    private Vector2 pillSpawnLocation;
 
     private PillHolder previewPillHolder;
     private PillHolder activePillHolder;
@@ -26,15 +30,8 @@ public class GameManager : MonoBehaviour
 
     private List<PillPart> fallingPills = new List<PillPart>();
 
-    private const float TICK_RATE_MILLIS = 600;
-    private const float TICK_RATE_PILLS_FALLING_MILLIS = 150;
-    private const int MIN_TILES_IN_MATCH = 4;
-    private const int MAX_VIRUS_HEIGHT = 10;
-    private const int SQUARE_VIRUS_CHANCE = 30;
-
-
     private int currentLevel;
-    private int numberOfVirusses;
+    private int numberOfAliveVirusses;
 
     private bool gameOver;
     private bool gameWon;
@@ -42,41 +39,20 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        pillSpawnLocation = new Vector2(width / 2 - 1, height - 1);
+
         SetUpBoardContent();
         SetupBoardBorder();
 
         CreateUpcomingPill();
 
+        // Start game after a short delay so player can take in the board and first pill before the game really starts
+        Invoke("StartGame", 2);
+    }
+
+    void StartGame()
+    {
         StartCoroutine(GameLoop());
-    }
-
-    private void CreateUpcomingPill()
-    {
-        previewPillHolder = GameObject.Instantiate(pillHolder, new Vector2(width + 5, height - 2), Quaternion.identity) as PillHolder;
-    }
-
-    private void SetUpBoardContent()
-    {
-        grid = new Square[width, height];
-
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < MAX_VIRUS_HEIGHT; j++)
-            {
-                if (Random.Range(0, 100) < SQUARE_VIRUS_CHANCE)
-                {
-                    numberOfVirusses++;
-                    Vector2 position = new Vector2(i, j);
-                    grid[i, j] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
-                }
-            }
-        }
-    }
-
-    private void SetupBoardBorder()
-    {
-        BorderPlacer borderPlacer = new BorderPlacer(width, height, pipe, pipeCorner);
-        borderPlacer.CreateBorders();
     }
 
     void Update()
@@ -94,6 +70,35 @@ public class GameManager : MonoBehaviour
                 print("restart level here");
             }
         }
+    }
+
+    private void SetUpBoardContent()
+    {
+        grid = new Square[width, height];
+
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < MAX_DIFFICULTY_MAX_VIRUS_HEIGHT; j++)
+            {
+                if (Random.Range(0, 100) < SQUARE_VIRUS_CHANCE)
+                {
+                    numberOfAliveVirusses++;
+                    Vector2 position = new Vector2(i, j);
+                    grid[i, j] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
+                }
+            }
+        }
+    }
+
+    private void SetupBoardBorder()
+    {
+        BorderPlacer borderPlacer = new BorderPlacer(width, height, pipe, pipeCorner);
+        borderPlacer.CreateBorders();
+    }
+
+    private void CreateUpcomingPill()
+    {
+        previewPillHolder = GameObject.Instantiate(pillHolder, new Vector2(width + 5, height - 2), Quaternion.identity) as PillHolder;
     }
 
     IEnumerator GameLoop()
@@ -160,7 +165,7 @@ public class GameManager : MonoBehaviour
 
     private bool IsGameWon()
     {
-        return numberOfVirusses == 0;
+        return numberOfAliveVirusses == 0;
     }
 
     private bool IsGameOver()
@@ -324,7 +329,7 @@ public class GameManager : MonoBehaviour
         {
             if (item.GetType() == typeof(Virus))
             {
-                numberOfVirusses--;
+                numberOfAliveVirusses--;
             }
 
             GameObject.Destroy(item.gameObject);
