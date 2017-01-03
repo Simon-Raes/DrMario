@@ -67,7 +67,6 @@ public class GameManager : MonoBehaviour
 
     void StartGame()
     {
-        print("letsa goo");
         StartCoroutine(GameLoop());
     }
 
@@ -133,18 +132,37 @@ public class GameManager : MonoBehaviour
     {
         grid = new Square[width, height];
 
-        for (int i = 0; i < width; i++)
+
+        int virussesStillToPlace = GetNumberOfVirussesForCurrentLevel();
+        numberOfAliveVirusses = virussesStillToPlace;
+
+        while (virussesStillToPlace > 0)
         {
-            for (int j = 0; j < MAX_DIFFICULTY_MAX_VIRUS_HEIGHT; j++)
+            int x = Random.Range(0, width);
+            int y = Random.Range(0, height - GetVirusMinDistanceFromTopForCurrentLevel());
+
+            if (grid[x, y] == null)
             {
-                if (Random.Range(0, 100) < SQUARE_VIRUS_CHANCE)
-                {
-                    numberOfAliveVirusses++;
-                    Vector2 position = new Vector2(i, j);
-                    grid[i, j] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
-                }
+                Vector2 position = new Vector2(x, y);
+                grid[x, y] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
+
+                virussesStillToPlace--;
             }
         }
+
+
+        // for (int i = 0; i < width; i++)
+        // {
+        //     for (int j = 0; j < MAX_DIFFICULTY_MAX_VIRUS_HEIGHT; j++)
+        //     {
+        //         if (Random.Range(0, 100) < SQUARE_VIRUS_CHANCE)
+        //         {
+        //             numberOfAliveVirusses++;
+        //             Vector2 position = new Vector2(i, j);
+        //             grid[i, j] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
+        //         }
+        //     }
+        // }
 
         // Game should have at least 1 virus
         // TODO find a working check to find out if the grid is empty
@@ -152,6 +170,31 @@ public class GameManager : MonoBehaviour
         {
             Vector2 position = new Vector2(Random.Range(0, width), Random.Range(0, height));
             grid[(int)position.x, (int)position.y] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
+        }
+    }
+
+    private int GetNumberOfVirussesForCurrentLevel()
+    {
+        // Number of virusses stops increasing after level 20
+        int difficultyLevel = Mathf.Min(20, currentLevel);
+        return (difficultyLevel + 1) * 4;
+    }
+
+    private int GetVirusMinDistanceFromTopForCurrentLevel()
+    {
+        int difficultyLevel = Mathf.Min(20, currentLevel);
+        // Guestimate based on the real game
+        if (difficultyLevel < 10)
+        {
+            return 5;
+        }
+        else if (difficultyLevel < 15)
+        {
+            return 4;
+        }
+        else
+        {
+            return 3;
         }
     }
 
