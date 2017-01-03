@@ -77,15 +77,11 @@ public class GameManager : MonoBehaviour
         {
             if (gameWon)
             {
-                // TODO go to next level
-                print("go to next level here");
                 currentLevel++;
                 SetupGame();
             }
             else if (gameOver)
             {
-                // TODO restart level or go back to menu
-                print("restart level here");
                 currentLevel = 0;
                 SetupGame();
             }
@@ -118,7 +114,6 @@ public class GameManager : MonoBehaviour
         {
             foreach (PillPart pill in fallingPills)
             {
-                // TODO should destroy holder?
                 GameObject.Destroy(pill.gameObject);
             }
         }
