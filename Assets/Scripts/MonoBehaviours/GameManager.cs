@@ -54,11 +54,14 @@ public class GameManager : MonoBehaviour
 
     void SetupGame()
     {
-        print("setting up game for level " + currentLevel);
         CleanUpPreviousRound();
 
-        SetUpBoardContent();
+        CreateVirusses();
+    }
 
+    // The virusses have been spawned. Create the first pill and start the game.
+    void SetupDone()
+    {
         CreateUpcomingPill();
 
         // Start game after a short delay so player can survey the board and first pill before the game really starts
@@ -128,10 +131,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void SetUpBoardContent()
+    private void CreateVirusses()
     {
         grid = new Square[width, height];
-
 
         int virussesStillToPlace = GetNumberOfVirussesForCurrentLevel();
         numberOfAliveVirusses = virussesStillToPlace;
@@ -148,28 +150,6 @@ public class GameManager : MonoBehaviour
 
                 virussesStillToPlace--;
             }
-        }
-
-
-        // for (int i = 0; i < width; i++)
-        // {
-        //     for (int j = 0; j < MAX_DIFFICULTY_MAX_VIRUS_HEIGHT; j++)
-        //     {
-        //         if (Random.Range(0, 100) < SQUARE_VIRUS_CHANCE)
-        //         {
-        //             numberOfAliveVirusses++;
-        //             Vector2 position = new Vector2(i, j);
-        //             grid[i, j] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
-        //         }
-        //     }
-        // }
-
-        // Game should have at least 1 virus
-        // TODO find a working check to find out if the grid is empty
-        if (grid.Length == 0)
-        {
-            Vector2 position = new Vector2(Random.Range(0, width), Random.Range(0, height));
-            grid[(int)position.x, (int)position.y] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
         }
     }
 
