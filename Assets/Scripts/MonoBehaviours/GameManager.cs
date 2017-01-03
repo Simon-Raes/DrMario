@@ -15,11 +15,9 @@ public class GameManager : MonoBehaviour
     public Text levelText;
 
     private const float TICK_RATE_MILLIS = 600;
-    private const float TICK_RATE_PILLS_FALLING_MILLIS = 150;
+    private const float TICK_RATE_PILLS_FALLING_MILLIS = 100;
+    private const float VIRUS_SPAWN_RATE_MILLIS = 16;
     private const int MIN_TILES_IN_MATCH = 4;
-    private const int MIN_DIFFICULTY_MAX_VIRUS_HEIGHT = 10;
-    private const int MAX_DIFFICULTY_MAX_VIRUS_HEIGHT = 13;
-    private const int SQUARE_VIRUS_CHANCE = 30;
 
     private Vector2 pillSpawnLocation;
 
@@ -56,38 +54,7 @@ public class GameManager : MonoBehaviour
     {
         CleanUpPreviousRound();
 
-        CreateVirusses();
-    }
-
-    // The virusses have been spawned. Create the first pill and start the game.
-    void SetupDone()
-    {
-        CreateUpcomingPill();
-
-        // Start game after a short delay so player can survey the board and first pill before the game really starts
-        Invoke("StartGame", 2);
-    }
-
-    void StartGame()
-    {
-        StartCoroutine(GameLoop());
-    }
-
-    void Update()
-    {
-        if (Input.GetKeyDown("return"))
-        {
-            if (gameWon)
-            {
-                currentLevel++;
-                SetupGame();
-            }
-            else if (gameOver)
-            {
-                currentLevel = 0;
-                SetupGame();
-            }
-        }
+        StartCoroutine(CreateVirusses());
     }
 
     private void CleanUpPreviousRound()
@@ -131,7 +98,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void CreateVirusses()
+    // TODO the real game will never spawn more than 3 virusses of the same color next to each other
+    // if you do you already get matches and virus kills before you even started playing
+    private IEnumerator CreateVirusses()
     {
         grid = new Square[width, height];
 
@@ -149,8 +118,26 @@ public class GameManager : MonoBehaviour
                 grid[x, y] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
 
                 virussesStillToPlace--;
+
+                yield return new WaitForSeconds(VIRUS_SPAWN_RATE_MILLIS / 1000f);
             }
         }
+
+        SetupDone();
+    }
+
+    // The virusses have been spawned. Create the first pill and start the game.
+    void SetupDone()
+    {
+        CreateUpcomingPill();
+
+        // Start game after a short delay so player can survey the board and first pill before the game really starts
+        Invoke("StartGame", 2);
+    }
+
+    void StartGame()
+    {
+        StartCoroutine(GameLoop());
     }
 
     private int GetNumberOfVirussesForCurrentLevel()
@@ -241,6 +228,23 @@ public class GameManager : MonoBehaviour
             {
                 activePillHolder.SetControllable();
                 CreateUpcomingPill();
+            }
+        }
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown("return"))
+        {
+            if (gameWon)
+            {
+                currentLevel++;
+                SetupGame();
+            }
+            else if (gameOver)
+            {
+                currentLevel = 0;
+                SetupGame();
             }
         }
     }
@@ -421,14 +425,6 @@ public class GameManager : MonoBehaviour
     private void UpdateLoosePills()
     {
         fallingPills.Clear();
-
-        // Loop over all tiles and check the pills
-        // Is single pill and nothing below it? FALL
-        // Is connected pill and nothing below either part? FALL
-        // else, don't fall
-
-        // did something fall? perform this method again in one second
-        // did nothing fall? we're done. spawn new activePillHolder
 
         // TODO can be improved - right now we're going to be checking a full pill twice, each pillpart will go through the check with its counterpart
 
