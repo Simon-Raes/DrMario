@@ -41,17 +41,33 @@ public class GameManager : MonoBehaviour
     {
         pillSpawnLocation = new Vector2(width / 2 - 1, height - 1);
 
-        SetUpBoardContent();
         SetupBoardBorder();
+
+        SetupGame();
+    }
+
+    private void SetupBoardBorder()
+    {
+        BorderPlacer borderPlacer = new BorderPlacer(width, height, pipe, pipeCorner);
+        borderPlacer.CreateBorders();
+    }
+
+    void SetupGame()
+    {
+        print("setting up game for level " + currentLevel);
+        CleanUpPreviousRound();
+
+        SetUpBoardContent();
 
         CreateUpcomingPill();
 
-        // Start game after a short delay so player can take in the board and first pill before the game really starts
+        // Start game after a short delay so player can survey the board and first pill before the game really starts
         Invoke("StartGame", 2);
     }
 
     void StartGame()
     {
+        print("letsa goo");
         StartCoroutine(GameLoop());
     }
 
@@ -63,12 +79,58 @@ public class GameManager : MonoBehaviour
             {
                 // TODO go to next level
                 print("go to next level here");
+                currentLevel++;
+                SetupGame();
             }
             else if (gameOver)
             {
                 // TODO restart level or go back to menu
                 print("restart level here");
+                currentLevel = 0;
+                SetupGame();
             }
+        }
+    }
+
+    private void CleanUpPreviousRound()
+    {
+        gameOver = false;
+        gameWon = false;
+        levelText.text = "";
+
+        if (grid != null)
+        {
+            for (int k = 0; k < grid.GetLength(0); k++)
+            {
+                for (int l = 0; l < grid.GetLength(1); l++)
+                {
+                    Square square = grid[k, l];
+                    if (square)
+                    {
+                        GameObject.Destroy(square.gameObject);
+                        grid[k, l] = null;
+                    }
+                }
+            }
+        }
+
+        if (fallingPills != null && fallingPills.Count > 0)
+        {
+            foreach (PillPart pill in fallingPills)
+            {
+                // TODO should destroy holder?
+                GameObject.Destroy(pill.gameObject);
+            }
+        }
+
+        if (previewPillHolder != null)
+        {
+            GameObject.Destroy(previewPillHolder.gameObject);
+        }
+
+        if (activePillHolder != null)
+        {
+            GameObject.Destroy(activePillHolder.gameObject);
         }
     }
 
@@ -88,12 +150,14 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-    }
 
-    private void SetupBoardBorder()
-    {
-        BorderPlacer borderPlacer = new BorderPlacer(width, height, pipe, pipeCorner);
-        borderPlacer.CreateBorders();
+        // Game should have at least 1 virus
+        // TODO find a working check to find out if the grid is empty
+        if (grid.Length == 0)
+        {
+            Vector2 position = new Vector2(Random.Range(0, width), Random.Range(0, height));
+            grid[(int)position.x, (int)position.y] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
+        }
     }
 
     private void CreateUpcomingPill()
