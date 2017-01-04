@@ -6,13 +6,19 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    [Header("Game")]
+    public int startLevel = 0;
+    [Header("Board")]
     public int width = 8;
     public int height = 16;
     public GameObject pipe;
     public GameObject pipeCorner;
+    [Header("Entities")]
     public Virus[] viruses;
     public PillHolder pillHolder;
+    [Header("UI")]
     public Text levelText;
+
 
     private const float TICK_RATE_MILLIS = 600;
     private const float TICK_RATE_PILLS_FALLING_MILLIS = 100;
@@ -38,6 +44,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         pillSpawnLocation = new Vector2(width / 2 - 1, height - 1);
+        currentLevel = startLevel;
 
         SetupBoardBorder();
 
@@ -243,7 +250,7 @@ public class GameManager : MonoBehaviour
             }
             else if (gameOver)
             {
-                currentLevel = 0;
+                currentLevel = startLevel;
                 SetupGame();
             }
         }
