@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// One half of a pill, either controllable or placed on the grid
 public class PillPart : Square
 {
 	public Sprite singlePillSprite;

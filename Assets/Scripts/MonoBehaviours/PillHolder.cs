@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Control the currently falling pill
 public class PillHolder : MonoBehaviour
 {
     GameManager gameManager;

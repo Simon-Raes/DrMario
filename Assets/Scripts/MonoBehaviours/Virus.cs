@@ -2,18 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Virus enemy placed in the grid
 public class Virus : Square
 {
 
-    // Use this for initialization
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
 }
