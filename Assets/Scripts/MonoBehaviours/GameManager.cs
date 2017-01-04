@@ -10,13 +10,13 @@ public class GameManager : MonoBehaviour
     public int height = 16;
     public GameObject pipe;
     public GameObject pipeCorner;
-    public Virus[] virusses;
+    public Virus[] viruses;
     public PillHolder pillHolder;
     public Text levelText;
 
     private const float TICK_RATE_MILLIS = 600;
     private const float TICK_RATE_PILLS_FALLING_MILLIS = 100;
-    private const float VIRUSSES_SPAWN_ANIMATION_DURATION_MILLIS = 1000;
+    private const float VIRUSES_SPAWN_ANIMATION_DURATION_MILLIS = 1000;
     private const int MIN_TILES_IN_MATCH = 4;
 
     private Vector2 pillSpawnLocation;
@@ -29,7 +29,7 @@ public class GameManager : MonoBehaviour
     private List<PillPart> fallingPills = new List<PillPart>();
 
     private int currentLevel;
-    private int numberOfAliveVirusses;
+    private int numberOfAliveViruses;
 
     private bool gameOver;
     private bool gameWon;
@@ -54,7 +54,7 @@ public class GameManager : MonoBehaviour
     {
         CleanUpPreviousRound();
 
-        StartCoroutine(CreateVirusses());
+        StartCoroutine(CreateViruses());
     }
 
     private void CleanUpPreviousRound()
@@ -98,16 +98,16 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // TODO the real game will never spawn more than 3 virusses of the same color next to each other
+    // TODO the real game will never spawn more than 3 viruses of the same color next to each other
     // if you do you already get matches and virus kills before you even started playing
-    private IEnumerator CreateVirusses()
+    private IEnumerator CreateViruses()
     {
         grid = new Square[width, height];
 
-        int virussesStillToPlace = GetNumberOfVirussesForCurrentLevel();
-        numberOfAliveVirusses = virussesStillToPlace;
+        int virusesStillToPlace = GetNumberOfVirusesForCurrentLevel();
+        numberOfAliveViruses = virusesStillToPlace;
 
-        while (virussesStillToPlace > 0)
+        while (virusesStillToPlace > 0)
         {
             int x = Random.Range(0, width);
             int y = Random.Range(0, height - GetVirusMinDistanceFromTopForCurrentLevel());
@@ -115,18 +115,18 @@ public class GameManager : MonoBehaviour
             if (grid[x, y] == null)
             {
                 Vector2 position = new Vector2(x, y);
-                grid[x, y] = GameObject.Instantiate(virusses[Random.Range(0, virusses.Length)], position, Quaternion.identity) as Virus;
+                grid[x, y] = GameObject.Instantiate(viruses[Random.Range(0, viruses.Length)], position, Quaternion.identity) as Virus;
 
-                virussesStillToPlace--;
+                virusesStillToPlace--;
 
-                yield return new WaitForSeconds(VIRUSSES_SPAWN_ANIMATION_DURATION_MILLIS / 1000f / numberOfAliveVirusses);
+                yield return new WaitForSeconds(VIRUSES_SPAWN_ANIMATION_DURATION_MILLIS / 1000f / numberOfAliveViruses);
             }
         }
 
         SetupDone();
     }
 
-    // The virusses have been spawned. Create the first pill and start the game.
+    // The viruses have been spawned. Create the first pill and start the game.
     void SetupDone()
     {
         CreateUpcomingPill();
@@ -140,9 +140,9 @@ public class GameManager : MonoBehaviour
         StartCoroutine(GameLoop());
     }
 
-    private int GetNumberOfVirussesForCurrentLevel()
+    private int GetNumberOfVirusesForCurrentLevel()
     {
-        // Number of virusses stops increasing after level 20
+        // Number of viruses stops increasing after level 20
         int difficultyLevel = Mathf.Min(20, currentLevel);
         return (difficultyLevel + 1) * 4;
     }
@@ -251,7 +251,7 @@ public class GameManager : MonoBehaviour
 
     private bool IsGameWon()
     {
-        return numberOfAliveVirusses == 0;
+        return numberOfAliveViruses == 0;
     }
 
     private bool IsGameOver()
@@ -415,7 +415,7 @@ public class GameManager : MonoBehaviour
         {
             if (item.GetType() == typeof(Virus))
             {
-                numberOfAliveVirusses--;
+                numberOfAliveViruses--;
             }
 
             GameObject.Destroy(item.gameObject);
