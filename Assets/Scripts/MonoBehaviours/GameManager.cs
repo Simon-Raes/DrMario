@@ -263,7 +263,7 @@ public class GameManager : MonoBehaviour
 
     private bool IsGameOver()
     {
-        return !IsSquareFree(pillSpawnLocation);
+        return !IsSquareFree(pillSpawnLocation) || !IsSquareFree(pillSpawnLocation + Vector2.right);
     }
 
     private void GoToNextLevel()
@@ -280,9 +280,16 @@ public class GameManager : MonoBehaviour
 
     public bool IsSquareFree(int x, int y)
     {
-        if (x < 0 || x >= width || y < 0 || y >= height)
+        if (x < 0 || x >= width || y < 0)
         {
             return false;
+        }
+
+        // Pill can rotate out of the board when rotating right after it spawned
+        // Makes higher difficulties less annoying because you don't have to wait a tick before rotating.
+        if (y >= height)
+        {
+            return true;
         }
 
         return grid[x, y] == null;
@@ -296,8 +303,26 @@ public class GameManager : MonoBehaviour
 
     private void AddSettledPillToGrid()
     {
-        AddPillPartToGrid(activePillHolder.GetMainPillPart());
-        AddPillPartToGrid(activePillHolder.GetSecondaryPillPart());
+        PillPart mainPillPart = activePillHolder.GetMainPillPart();
+        PillPart secondaryPillPart = activePillHolder.GetSecondaryPillPart();
+
+        AddPillPartIfPossible(mainPillPart, secondaryPillPart);
+        AddPillPartIfPossible(secondaryPillPart, mainPillPart);
+    }
+
+    // Pills placed vertically when there is only a single square free at the top will be half-on, half-off the board
+    // Destroy the part that is sticking out of the board, make the other one a single pill.
+    private void AddPillPartIfPossible(PillPart partToAdd, PillPart pillPartCounterPart)
+    {
+        if (partToAdd.transform.position.y < height)
+        {
+            AddPillPartToGrid(partToAdd);
+        }
+        else
+        {
+            GameObject.Destroy(partToAdd.gameObject);
+            pillPartCounterPart.SetSingle();
+        }
     }
 
     private void AddPillPartToGrid(PillPart pillPart)
