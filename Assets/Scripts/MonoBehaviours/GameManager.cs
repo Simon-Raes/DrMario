@@ -16,7 +16,7 @@ public class GameManager : MonoBehaviour
 
     private const float TICK_RATE_MILLIS = 600;
     private const float TICK_RATE_PILLS_FALLING_MILLIS = 100;
-    private const float VIRUS_SPAWN_RATE_MILLIS = 16;
+    private const float VIRUSSES_SPAWN_ANIMATION_DURATION_MILLIS = 1000;
     private const int MIN_TILES_IN_MATCH = 4;
 
     private Vector2 pillSpawnLocation;
@@ -119,7 +119,7 @@ public class GameManager : MonoBehaviour
 
                 virussesStillToPlace--;
 
-                yield return new WaitForSeconds(VIRUS_SPAWN_RATE_MILLIS / 1000f);
+                yield return new WaitForSeconds(VIRUSSES_SPAWN_ANIMATION_DURATION_MILLIS / 1000f / numberOfAliveVirusses);
             }
         }
 
@@ -185,7 +185,7 @@ public class GameManager : MonoBehaviour
         if (IsGameWon())
         {
             gameWon = true;
-            levelText.text = "You da man";
+            levelText.text = "Level " + currentLevel + " complete\nPress enter.";
             return;
         }
 
@@ -222,7 +222,7 @@ public class GameManager : MonoBehaviour
             if (IsGameOver())
             {
                 gameOver = true;
-                levelText.text = "GAME OVER";
+                levelText.text = "GAME OVER\nPress enter";
             }
             else
             {
