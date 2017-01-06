@@ -266,13 +266,6 @@ public class GameManager : MonoBehaviour
         return !IsSquareFree(pillSpawnLocation) || !IsSquareFree(pillSpawnLocation + Vector2.right);
     }
 
-    private void GoToNextLevel()
-    {
-        print("you da man");
-        levelText.text = "you da man!";
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-    }
-
     public bool IsSquareFree(Vector2 vector)
     {
         return IsSquareFree((int)vector.x, (int)vector.y);
