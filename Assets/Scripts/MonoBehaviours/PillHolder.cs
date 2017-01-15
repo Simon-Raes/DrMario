@@ -54,8 +54,6 @@ public class PillHolder : MonoBehaviour
             return;
         }
 
-        float input = 0;
-
         if (Input.GetKey("left"))
         {
             if (CanMoveLeft())
@@ -97,18 +95,14 @@ public class PillHolder : MonoBehaviour
                 MoveDownOrSettle();
             }
         }
-        else if (Input.GetKeyDown("z"))
+        
+        if (Input.GetKeyDown("z"))
         {
             RotateClockwise();
         }
         else if (Input.GetKeyDown("x"))
         {
             RotateCounterClockwise();
-        }
-
-        if (input != 0)
-        {
-            transform.position = new Vector2(transform.position.x + input, transform.position.y);
         }
     }
 
