@@ -17,6 +17,9 @@ public class PillHolder : MonoBehaviour
     private enum Position { LEFTRIGHT, BOTTOMTOP, RIGHTLEFT, TOPBOTTOM }
     private Position position = Position.LEFTRIGHT;
 
+    private float lastDownPress = float.MinValue;
+    private const float MILLIS_BETWEEN_MOVEMENT_DOWN = 60;
+
     void Start()
     {
         gameManager = FindObjectOfType<GameManager>();
@@ -64,13 +67,24 @@ public class PillHolder : MonoBehaviour
                 input = 1;
             }
         }
-        else if (Input.GetKeyDown("down"))
+        else if (Input.GetKey("down"))
         {
             // TODO also need to reset the tickclock here - now you have both this and the tick moving the block down at the same time
             // looks and feels bad
 
             // TODO hold down for faster movement downwards - also reset tick clock
-            MoveDownOrSettle();
+
+            bool canMoveAgain = (Time.time - MILLIS_BETWEEN_MOVEMENT_DOWN / 1000f) > lastDownPress;
+            if (canMoveAgain)
+            {
+                lastDownPress = Time.time;
+                MoveDownOrSettle();
+            }
+
+        }
+        else if (Input.GetKeyUp("down"))
+        {
+            lastDownPress = float.MinValue;
         }
         else if (Input.GetKeyDown("z"))
         {
@@ -156,6 +170,8 @@ public class PillHolder : MonoBehaviour
         }
 
         transform.position = new Vector2(transform.position.x, transform.position.y - 1);
+        // todo also do this for settling?
+        gameManager.PillHolderMovedByPlayer();
     }
 
     private bool CanMoveDown()
@@ -307,7 +323,7 @@ public class PillHolder : MonoBehaviour
                 else
                 {
                     newMain = CreateNewMainVectorWithOffset(-1, -1);
-                    newSecondary = CreateNewSecondaryVectorWithOffset(0,0);
+                    newSecondary = CreateNewSecondaryVectorWithOffset(0, 0);
                     if (RotateIfPossible(newMain, newSecondary))
                     {
                         position = Position.LEFTRIGHT;

@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
@@ -37,15 +36,18 @@ public class GameManager : MonoBehaviour
     private int currentLevel;
     private int numberOfAliveViruses;
 
+    private bool gameRunning;
     private bool gameOver;
     private bool gameWon;
     private bool loosePillsAreFalling;
+
+    float lastTick = float.MinValue;
 
     void Start()
     {
         pillSpawnLocation = new Vector2(width / 2 - 1, height - 1);
 
-        if(StateHolder.virusLevel != - 1)
+        if (StateHolder.virusLevel != -1)
         {
             currentLevel = StateHolder.virusLevel;
         }
@@ -141,20 +143,6 @@ public class GameManager : MonoBehaviour
         SetupDone();
     }
 
-    // The viruses have been spawned. Create the first pill and start the game.
-    void SetupDone()
-    {
-        CreateUpcomingPill();
-
-        // Start game after a short delay so player can survey the board and first pill before the game really starts
-        Invoke("StartGame", 2);
-    }
-
-    void StartGame()
-    {
-        StartCoroutine(GameLoop());
-    }
-
     private int GetNumberOfVirusesForCurrentLevel()
     {
         // Number of viruses stops increasing after level 20
@@ -180,19 +168,53 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // The viruses have been spawned. Create the first pill and start the game.
+    void SetupDone()
+    {
+        CreateUpcomingPill();
+
+        // Start game after a short delay so player can survey the board and first pill before the game really starts
+        Invoke("StartGame", 2);
+    }
+
     private void CreateUpcomingPill()
     {
         previewPillHolder = GameObject.Instantiate(pillHolder, new Vector2(width + 5, height - 2), Quaternion.identity) as PillHolder;
     }
 
-    IEnumerator GameLoop()
+    void StartGame()
     {
-        while (!gameOver && !gameWon)
+        gameRunning = true;
+        // Continues in Update
+    }
+
+    void Update()
+    {
+        if (gameRunning && ShouldTick())
         {
+            lastTick = Time.time;
             Tick();
-            float tickRate = loosePillsAreFalling ? TICK_RATE_PILLS_FALLING_MILLIS : TICK_RATE_MILLIS;
-            yield return new WaitForSeconds(tickRate / 1000f);
         }
+
+        if (Input.GetKeyDown("return"))
+        {
+            if (gameWon)
+            {
+                currentLevel++;
+                SetupGame();
+            }
+            else if (gameOver)
+            {
+                currentLevel = startLevel;
+                SetupGame();
+            }
+        }
+    }
+
+    private bool ShouldTick()
+    {
+        float tickRate = loosePillsAreFalling ? TICK_RATE_PILLS_FALLING_MILLIS : TICK_RATE_MILLIS;
+        return (Time.time - tickRate / 1000f) > lastTick;
     }
 
     private void Tick()
@@ -200,6 +222,7 @@ public class GameManager : MonoBehaviour
         if (IsGameWon())
         {
             gameWon = true;
+            gameRunning = false;
             levelText.text = "Level " + currentLevel + " complete\nPress enter.";
             return;
         }
@@ -237,29 +260,13 @@ public class GameManager : MonoBehaviour
             if (IsGameOver())
             {
                 gameOver = true;
+                gameRunning = false;
                 levelText.text = "GAME OVER\nPress enter";
             }
             else
             {
                 activePillHolder.SetControllable();
                 CreateUpcomingPill();
-            }
-        }
-    }
-
-    void Update()
-    {
-        if (Input.GetKeyDown("return"))
-        {
-            if (gameWon)
-            {
-                currentLevel++;
-                SetupGame();
-            }
-            else if (gameOver)
-            {
-                currentLevel = startLevel;
-                SetupGame();
             }
         }
     }
@@ -295,6 +302,13 @@ public class GameManager : MonoBehaviour
 
         return grid[x, y] == null;
     }
+
+    // Call this to indicate the player moved his pill.
+    // This will restart the tick timer so we don't get two movement events (1 from player and 1 from gameloop tick) happening very close together.
+    public void PillHolderMovedByPlayer()
+    {
+        lastTick = Time.time;
+    }   
 
     public void SetPillSettled()
     {
