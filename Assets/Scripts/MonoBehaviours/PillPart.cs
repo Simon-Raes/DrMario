@@ -5,17 +5,19 @@ using UnityEngine;
 // One half of a pill, either controllable or placed on the grid
 public class PillPart : Square
 {
-	public Sprite singlePillSprite;
+    public Sprite singlePillSprite;
 
-	private SpriteRenderer spriteRenderer;
+    private SpriteRenderer spriteRenderer;
+    private Animator animator;
 
     private PillHolder pillHolder;
     private bool single;
-	
-	void Start()
-	{
-		spriteRenderer = GetComponent<SpriteRenderer>();
-	}
+
+    void Start()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>();
+    }
 
     public void SetPillHolder(PillHolder pillHolder)
     {
@@ -25,8 +27,8 @@ public class PillPart : Square
     public void SetSingle()
     {
         single = true;
-        
-		spriteRenderer.sprite = singlePillSprite;
+
+        spriteRenderer.sprite = singlePillSprite;
     }
 
     public bool IsSingle()
@@ -34,10 +36,19 @@ public class PillPart : Square
         return single;
     }
 
-	public PillPart GetCounterPart()
-	{
-		return pillHolder.GetCounterPart(this);
-	}
+    public PillPart GetCounterPart()
+    {
+        return pillHolder.GetCounterPart(this);
+    }
+
+    // todo figure out when to play
+    public void PlayDeathAnimation()
+    {
+        if (animator != null)
+        {
+            animator.SetTrigger("Kill");
+        }
+    }
 
     void OnDestroy()
     {

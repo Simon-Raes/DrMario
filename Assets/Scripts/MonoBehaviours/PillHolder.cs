@@ -68,6 +68,8 @@ public class PillHolder : MonoBehaviour
         {
             // TODO also need to reset the tickclock here - now you have both this and the tick moving the block down at the same time
             // looks and feels bad
+
+            // TODO hold down for faster movement downwards - also reset tick clock
             MoveDownOrSettle();
         }
         else if (Input.GetKeyDown("z"))
@@ -197,42 +199,54 @@ public class PillHolder : MonoBehaviour
                 newMain = CreateNewMainVectorWithOffset(0, 1);
                 newSecondary = CreateNewSecondaryVectorWithOffset(-1, 0);
 
-                if (gameManager.IsSquareFree(newMain) && gameManager.IsSquareFree(newSecondary))
+                if (RotateIfPossible(newMain, newSecondary))
                 {
                     position = Position.TOPBOTTOM;
-                    mainPillPart.transform.position = newMain;
-                    secondaryPillPart.transform.position = newSecondary;
                 }
                 break;
             case Position.BOTTOMTOP:
                 newMain = CreateNewMainVectorWithOffset(0, 0);
                 newSecondary = CreateNewSecondaryVectorWithOffset(1, -1);
 
-                if (gameManager.IsSquareFree(newSecondary))
+                if (RotateIfPossible(newMain, newSecondary))
                 {
                     position = Position.LEFTRIGHT;
-                    secondaryPillPart.transform.position = newSecondary;
+                }
+                else
+                {
+                    newMain = CreateNewMainVectorWithOffset(-1, 0);
+                    newSecondary = CreateNewSecondaryVectorWithOffset(0, -1);
+                    if (RotateIfPossible(newMain, newSecondary))
+                    {
+                        position = Position.LEFTRIGHT;
+                    }
                 }
                 break;
             case Position.RIGHTLEFT:
                 newMain = CreateNewMainVectorWithOffset(-1, 0);
                 newSecondary = CreateNewSecondaryVectorWithOffset(0, 1);
 
-                if (gameManager.IsSquareFree(newMain) && gameManager.IsSquareFree(newSecondary))
+                if (RotateIfPossible(newMain, newSecondary))
                 {
                     position = Position.BOTTOMTOP;
-                    mainPillPart.transform.position = newMain;
-                    secondaryPillPart.transform.position = newSecondary;
                 }
                 break;
             case Position.TOPBOTTOM:
                 newMain = CreateNewMainVectorWithOffset(1, -1);
                 newSecondary = CreateNewSecondaryVectorWithOffset(0, 0);
 
-                if (gameManager.IsSquareFree(newMain))
+                if (RotateIfPossible(newMain, newSecondary))
                 {
                     position = Position.RIGHTLEFT;
-                    mainPillPart.transform.position = newMain;
+                }
+                else
+                {
+                    newMain = CreateNewMainVectorWithOffset(0, -1);
+                    newSecondary = CreateNewSecondaryVectorWithOffset(-1, 0);
+                    if (RotateIfPossible(newMain, newSecondary))
+                    {
+                        position = Position.RIGHTLEFT;
+                    }
                 }
                 break;
         }
@@ -250,31 +264,36 @@ public class PillHolder : MonoBehaviour
                 newMain = CreateNewMainVectorWithOffset(0, 0);
                 newSecondary = CreateNewSecondaryVectorWithOffset(-1, 1);
 
-                if (gameManager.IsSquareFree(newSecondary))
+                if (RotateIfPossible(newMain, newSecondary))
                 {
                     position = Position.BOTTOMTOP;
-                    secondaryPillPart.transform.position = newSecondary;
                 }
                 break;
             case Position.BOTTOMTOP:
                 newMain = CreateNewMainVectorWithOffset(1, 0);
                 newSecondary = CreateNewSecondaryVectorWithOffset(0, -1);
 
-                if (gameManager.IsSquareFree(newMain) && gameManager.IsSquareFree(newSecondary))
+                if (RotateIfPossible(newMain, newSecondary))
                 {
                     position = Position.RIGHTLEFT;
-                    mainPillPart.transform.position = newMain;
-                    secondaryPillPart.transform.position = newSecondary;
+                }
+                else
+                {
+                    newMain = CreateNewMainVectorWithOffset(0, 0);
+                    newSecondary = CreateNewSecondaryVectorWithOffset(-1, -1);
+                    if (RotateIfPossible(newMain, newSecondary))
+                    {
+                        position = Position.RIGHTLEFT;
+                    }
                 }
                 break;
             case Position.RIGHTLEFT:
                 newMain = CreateNewMainVectorWithOffset(-1, 1);
                 newSecondary = CreateNewSecondaryVectorWithOffset(0, 0);
 
-                if (gameManager.IsSquareFree(newMain))
+                if (RotateIfPossible(newMain, newSecondary))
                 {
                     position = Position.TOPBOTTOM;
-                    mainPillPart.transform.position = newMain;
                 }
                 break;
             case Position.TOPBOTTOM:
@@ -284,6 +303,15 @@ public class PillHolder : MonoBehaviour
                 if (RotateIfPossible(newMain, newSecondary))
                 {
                     position = Position.LEFTRIGHT;
+                }
+                else
+                {
+                    newMain = CreateNewMainVectorWithOffset(-1, -1);
+                    newSecondary = CreateNewSecondaryVectorWithOffset(0,0);
+                    if (RotateIfPossible(newMain, newSecondary))
+                    {
+                        position = Position.LEFTRIGHT;
+                    }
                 }
                 break;
         }

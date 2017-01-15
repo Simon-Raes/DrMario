@@ -44,7 +44,15 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         pillSpawnLocation = new Vector2(width / 2 - 1, height - 1);
-        currentLevel = startLevel;
+
+        if(StateHolder.virusLevel != - 1)
+        {
+            currentLevel = StateHolder.virusLevel;
+        }
+        else
+        {
+            currentLevel = startLevel;
+        }
 
         SetupBoardBorder();
 

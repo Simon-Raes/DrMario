@@ -1,9 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿public static class StateHolder {
 
-public static class StateHolder {
-
-	public static int level;
+	public static int virusLevel = -1;
+	public static int speed = -1;
 
 }
