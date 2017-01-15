@@ -18,7 +18,13 @@ public class PillHolder : MonoBehaviour
     private Position position = Position.LEFTRIGHT;
 
     private float lastDownPress = float.MinValue;
+    private float lastLeftPress = float.MinValue;
+    private float lastRightPress = float.MinValue;
     private const float MILLIS_BETWEEN_MOVEMENT_DOWN = 60;
+    int movementsDoneDuringHold;
+    // int rightMovementsDoneDuringHold;
+    private const float MILLIS_BETWEEN_INITIAL_MOVEMENT_SIDEWAYS = 275;
+    private const float MILLIS_BETWEEN_MOVEMENT_SIDEWAYS = 100;
 
     void Start()
     {
@@ -41,7 +47,6 @@ public class PillHolder : MonoBehaviour
         UpdatePillRotations();
     }
 
-
     void Update()
     {
         if (!active)
@@ -51,40 +56,46 @@ public class PillHolder : MonoBehaviour
 
         float input = 0;
 
-        if (Input.GetKeyDown("left"))
+        if (Input.GetKey("left"))
         {
             if (CanMoveLeft())
             {
-                input = -1;
+                bool initialMovement = movementsDoneDuringHold == 0;
+                bool bigDelayMovement = movementsDoneDuringHold == 1 && (Time.time - MILLIS_BETWEEN_INITIAL_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+                bool regularMovement = movementsDoneDuringHold > 1 && Time.time - (MILLIS_BETWEEN_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+
+                if (initialMovement || bigDelayMovement || regularMovement)
+                {
+                    MoveLeft();
+                }
             }
         }
-        else if (Input.GetKeyDown("right"))
+        else if (Input.GetKeyUp("left") || Input.GetKeyUp("right"))
         {
-            // TODO right now rotations get block when pill is vertical against the right wall (because can't rotate into the wall)
-            // In the real game this pushes the pill one block to the left so it can rotate.
+            movementsDoneDuringHold = 0;
+        }
+        else if (Input.GetKey("right"))
+        {
             if (CanMoveRight())
             {
-                input = 1;
+                bool initialMovement = movementsDoneDuringHold == 0;
+                bool bigDelayMovement = movementsDoneDuringHold == 1 && (Time.time - MILLIS_BETWEEN_INITIAL_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+                bool regularMovement = movementsDoneDuringHold > 1 && Time.time - (MILLIS_BETWEEN_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+
+                if (initialMovement || bigDelayMovement || regularMovement)
+                {
+                    MoveRight();
+                }
             }
         }
         else if (Input.GetKey("down"))
         {
-            // TODO also need to reset the tickclock here - now you have both this and the tick moving the block down at the same time
-            // looks and feels bad
-
-            // TODO hold down for faster movement downwards - also reset tick clock
-
             bool canMoveAgain = (Time.time - MILLIS_BETWEEN_MOVEMENT_DOWN / 1000f) > lastDownPress;
             if (canMoveAgain)
             {
                 lastDownPress = Time.time;
                 MoveDownOrSettle();
             }
-
-        }
-        else if (Input.GetKeyUp("down"))
-        {
-            lastDownPress = float.MinValue;
         }
         else if (Input.GetKeyDown("z"))
         {
@@ -99,6 +110,20 @@ public class PillHolder : MonoBehaviour
         {
             transform.position = new Vector2(transform.position.x + input, transform.position.y);
         }
+    }
+
+    private void MoveLeft()
+    {
+        lastLeftPress = Time.time;
+        movementsDoneDuringHold++;
+        transform.position = new Vector2(transform.position.x - 1, transform.position.y);
+    }
+
+    private void MoveRight()
+    {
+        lastLeftPress = Time.time;
+        movementsDoneDuringHold++;
+        transform.position = new Vector2(transform.position.x + 1, transform.position.y);
     }
 
     public void SetControllable()
