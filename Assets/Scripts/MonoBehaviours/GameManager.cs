@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviour
 {
     [Header("Game")]
     public int startLevel = 0;
+    public Difficulty difficulty = Difficulty.MID;
     [Header("Board")]
     public int width = 8;
     public int height = 16;
@@ -19,7 +20,9 @@ public class GameManager : MonoBehaviour
     public Text levelText;
 
 
-    private const float TICK_RATE_MILLIS = 600;
+    private const float TICK_RATE_MILLIS_LOW = 625;
+    private const float TICK_RATE_MILLIS_MID = 313;
+    private const float TICK_RATE_MILLIS_HI = 200;
     private const float TICK_RATE_PILLS_FALLING_MILLIS = 100;
     private const float VIRUSES_SPAWN_ANIMATION_DURATION_MILLIS = 1000;
     private const int MIN_TILES_IN_MATCH = 4;
@@ -35,6 +38,7 @@ public class GameManager : MonoBehaviour
 
     private int currentLevel;
     private int numberOfAliveViruses;
+    private float tickRateMillis;
 
     private bool gameRunning;
     private bool gameOver;
@@ -56,9 +60,35 @@ public class GameManager : MonoBehaviour
             currentLevel = startLevel;
         }
 
+        if (StateHolder.difficulty != Difficulty.NONE)
+        {
+            SetTickRateForDifficulty(StateHolder.difficulty);
+        }
+        else
+        {
+            SetTickRateForDifficulty(difficulty);
+        }
+
         SetupBoardBorder();
 
         SetupGame();
+    }
+
+    private void SetTickRateForDifficulty(Difficulty difficulty)
+    {
+        switch (difficulty)
+        {
+            default:
+            case Difficulty.LOW:
+                tickRateMillis = TICK_RATE_MILLIS_LOW;
+                break;
+            case Difficulty.MID:
+                tickRateMillis = TICK_RATE_MILLIS_MID;
+                break;
+            case Difficulty.HI:
+                tickRateMillis = TICK_RATE_MILLIS_HI;
+                break;
+        }
     }
 
     private void SetupBoardBorder()
@@ -213,7 +243,7 @@ public class GameManager : MonoBehaviour
 
     private bool ShouldTick()
     {
-        float tickRate = loosePillsAreFalling ? TICK_RATE_PILLS_FALLING_MILLIS : TICK_RATE_MILLIS;
+        float tickRate = loosePillsAreFalling ? TICK_RATE_PILLS_FALLING_MILLIS : tickRateMillis;
         return (Time.time - tickRate / 1000f) > lastTick;
     }
 
@@ -243,6 +273,7 @@ public class GameManager : MonoBehaviour
         HashSet<Square> matches = CheckForMatches();
         if (matches.Count > 0)
         {
+            UpdateScore(matches.Count);
             RemoveMatches(matches);
             return;
         }
@@ -308,7 +339,7 @@ public class GameManager : MonoBehaviour
     public void PillHolderMovedByPlayer()
     {
         lastTick = Time.time;
-    }   
+    }
 
     public void SetPillSettled()
     {
@@ -456,6 +487,25 @@ public class GameManager : MonoBehaviour
         return matches;
     }
 
+    private void UpdateScore(int virusesKilled)
+    {
+        /* 
+        This table is taken directly from the Dr. Mario instruction booklet.
+        __________________ ______________________________
+        |NUMBER OF VIRUSES |   LOW   |   MED   |   HIGH   |
+        |   ELIMINATED     |  SPEED  |  SPEED  |  SPEED   |
+        |¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯|¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯|
+        |	     1		   |   100   |   200   |   300    |
+        |        2         |   200   |   400   |   600    |
+        |        3         |   400   |   800   |  1200    |
+        |        4         |   800   |  1600   |  2400    |
+        |        5         |  1600   |  3200   |  4800    |
+        |        6         |  3200   |  6400   |  9600    | 
+        */
+
+        int speedMultiplier = 1; // or 2 or 3
+    }
+
     private void RemoveMatches(HashSet<Square> matches)
     {
         foreach (Square item in matches)
@@ -496,7 +546,7 @@ public class GameManager : MonoBehaviour
 
                 if (pillPart.IsSingle())
                 {
-                    if (SquareAtLocationIsFallingPillPart(i, j) && !fallingPills.Contains(pillPart))
+                    if (IsSquareAtLocationFallingPillPart(i, j) && !fallingPills.Contains(pillPart))
                     {
                         fallingPills.Add(pillPart);
                     }
@@ -519,7 +569,7 @@ public class GameManager : MonoBehaviour
                             continue;
                         }
 
-                        bool pillIsfalling = SquareAtLocationIsFallingPillPart(i, lowestY);
+                        bool pillIsfalling = IsSquareAtLocationFallingPillPart(i, lowestY);
 
                         if (pillIsfalling)
                         {
@@ -536,8 +586,8 @@ public class GameManager : MonoBehaviour
                     else
                     {
                         // Horizontally positioned full pill
-                        bool mainPillPartIsFalling = SquareAtLocationIsFallingPillPart(i, j);
-                        bool secondaryPillPartIsFalling = SquareAtLocationIsFallingPillPart((int)counterPart.transform.position.x, j);
+                        bool mainPillPartIsFalling = IsSquareAtLocationFallingPillPart(i, j);
+                        bool secondaryPillPartIsFalling = IsSquareAtLocationFallingPillPart((int)counterPart.transform.position.x, j);
 
                         if (mainPillPartIsFalling && secondaryPillPartIsFalling)
                         {
@@ -556,7 +606,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private bool SquareAtLocationIsFallingPillPart(int x, int y)
+    private bool IsSquareAtLocationFallingPillPart(int x, int y)
     {
         Square squareBelow = grid[x, y - 1];
 
