@@ -18,6 +18,7 @@ public class GameManager : MonoBehaviour
     public PillHolder pillHolder;
     [Header("UI")]
     public Text levelText;
+    public Text scoreText;
 
 
     private const float TICK_RATE_MILLIS_LOW = 625;
@@ -47,6 +48,8 @@ public class GameManager : MonoBehaviour
 
     float lastTick = float.MinValue;
 
+    private int score;
+
     void Start()
     {
         pillSpawnLocation = new Vector2(width / 2 - 1, height - 1);
@@ -62,19 +65,19 @@ public class GameManager : MonoBehaviour
 
         if (StateHolder.difficulty != Difficulty.NONE)
         {
-            SetTickRateForDifficulty(StateHolder.difficulty);
+            difficulty = StateHolder.difficulty;
         }
-        else
-        {
-            SetTickRateForDifficulty(difficulty);
-        }
+        SetTickRateForDifficulty();
 
+        score = 0;
+        scoreText.text = score.ToString();
+    
         SetupBoardBorder();
 
         SetupGame();
     }
 
-    private void SetTickRateForDifficulty(Difficulty difficulty)
+    private void SetTickRateForDifficulty()
     {
         switch (difficulty)
         {
@@ -109,6 +112,7 @@ public class GameManager : MonoBehaviour
         gameOver = false;
         gameWon = false;
         levelText.text = "";
+
 
         if (grid != null)
         {
@@ -235,6 +239,9 @@ public class GameManager : MonoBehaviour
             }
             else if (gameOver)
             {
+                score = 0;
+                scoreText.text = score.ToString();
+
                 currentLevel = startLevel;
                 SetupGame();
             }
@@ -273,7 +280,8 @@ public class GameManager : MonoBehaviour
         HashSet<Square> matches = CheckForMatches();
         if (matches.Count > 0)
         {
-            UpdateScore(matches.Count);
+            UpdateAndDisplayScore(matches);
+
             RemoveMatches(matches);
             return;
         }
@@ -310,6 +318,27 @@ public class GameManager : MonoBehaviour
     private bool IsGameOver()
     {
         return !IsSquareFree(pillSpawnLocation) || !IsSquareFree(pillSpawnLocation + Vector2.right);
+    }
+
+    private void UpdateAndDisplayScore(HashSet<Square> matches)
+    {
+        int viruses = GetNumberOfVirussesInMatches(matches);
+        int matchScore = GetScoreForKilledViruses(viruses);
+        score += matchScore;
+        scoreText.text = score.ToString();
+    }
+
+    private int GetNumberOfVirussesInMatches(HashSet<Square> matches)
+    {
+        int count = 0;
+        foreach (Square item in matches)
+        {
+            if (item.GetType() == typeof(Virus))
+            {
+                count++;
+            }
+        }
+        return count;
     }
 
     public bool IsSquareFree(Vector2 vector)
@@ -487,7 +516,7 @@ public class GameManager : MonoBehaviour
         return matches;
     }
 
-    private void UpdateScore(int virusesKilled)
+    public int GetScoreForKilledViruses(int virusesKilled)
     {
         /* 
         This table is taken directly from the Dr. Mario instruction booklet.
@@ -501,9 +530,28 @@ public class GameManager : MonoBehaviour
         |        4         |   800   |  1600   |  2400    |
         |        5         |  1600   |  3200   |  4800    |
         |        6         |  3200   |  6400   |  9600    | 
+
         */
 
-        int speedMultiplier = 1; // or 2 or 3
+        int difficultyMultiplier = 1;
+
+        switch (difficulty)
+        {
+            case Difficulty.LOW:
+                difficultyMultiplier = 1;
+                break;
+            case Difficulty.MID:
+                difficultyMultiplier = 2;
+                break;
+            case Difficulty.HI:
+                difficultyMultiplier = 3;
+                break;
+        }
+
+        float baseScore = Mathf.Pow(2, (virusesKilled - 1));
+        int finalScore = (int)baseScore * 100 * difficultyMultiplier;
+
+        return finalScore;
     }
 
     private void RemoveMatches(HashSet<Square> matches)
