@@ -7,7 +7,7 @@ public class GameManager : MonoBehaviour
 {
     [Header("Game")]
     public int startLevel = 0;
-    public Difficulty difficulty = Difficulty.MID;
+    public Difficulty difficulty = Difficulty.LOW;
     [Header("Board")]
     public int width = 8;
     public int height = 16;
@@ -17,9 +17,16 @@ public class GameManager : MonoBehaviour
     public Virus[] viruses;
     public PillHolder pillHolder;
     [Header("UI")]
-    public Text levelText;
-    public Text scoreText;
-
+    [Header("Game")]
+    public GameObject panelStatus;
+    public Text textStatus;
+    [Header("Score")]
+    public Text textTop;
+    public Text textScore;
+    [Header("Level")]
+    public Text textLevel;
+    public Text textSpeed;
+    public Text textVirus;
 
     private const float TICK_RATE_MILLIS_LOW = 625;
     private const float TICK_RATE_MILLIS_MID = 313;
@@ -70,7 +77,7 @@ public class GameManager : MonoBehaviour
         SetTickRateForDifficulty();
 
         score = 0;
-        scoreText.text = score.ToString();
+        textScore.text = score.ToString();
     
         SetupBoardBorder();
 
@@ -111,8 +118,8 @@ public class GameManager : MonoBehaviour
     {
         gameOver = false;
         gameWon = false;
-        levelText.text = "";
 
+        ResetUi();
 
         if (grid != null)
         {
@@ -149,14 +156,25 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void ResetUi()
+    {
+        textTop.text = "TODO";
+
+        textLevel.text = currentLevel.ToString();
+        textSpeed.text = difficulty.ToString();
+        textVirus.text = "0";
+    }
+
     // TODO the real game will never spawn more than 3 viruses of the same color next to each other
     // if you do you already get matches and virus kills before you even started playing
     private IEnumerator CreateViruses()
     {
         grid = new Square[width, height];
 
-        int virusesStillToPlace = GetNumberOfVirusesForCurrentLevel();
-        numberOfAliveViruses = virusesStillToPlace;
+        int totalNumberOfViruses = GetNumberOfVirusesForCurrentLevel();
+        int virusesStillToPlace = totalNumberOfViruses;
+
+        numberOfAliveViruses = 0;
 
         while (virusesStillToPlace > 0)
         {
@@ -169,8 +187,11 @@ public class GameManager : MonoBehaviour
                 grid[x, y] = GameObject.Instantiate(viruses[Random.Range(0, viruses.Length)], position, Quaternion.identity) as Virus;
 
                 virusesStillToPlace--;
+                numberOfAliveViruses++;
 
-                yield return new WaitForSeconds(VIRUSES_SPAWN_ANIMATION_DURATION_MILLIS / 1000f / numberOfAliveViruses);
+                UpdateVirusCounterUi();
+
+                yield return new WaitForSeconds(VIRUSES_SPAWN_ANIMATION_DURATION_MILLIS / 1000f / totalNumberOfViruses);
             }
         }
 
@@ -200,6 +221,11 @@ public class GameManager : MonoBehaviour
         {
             return 3;
         }
+    }
+
+    private void UpdateVirusCounterUi()
+    {
+        textVirus.text = numberOfAliveViruses.ToString();
     }
 
     // The viruses have been spawned. Create the first pill and start the game.
@@ -240,11 +266,11 @@ public class GameManager : MonoBehaviour
             else if (gameOver)
             {
                 score = 0;
-                scoreText.text = score.ToString();
-
-                currentLevel = startLevel;
+                textScore.text = score.ToString();
                 SetupGame();
             }
+
+            panelStatus.SetActive(false);
         }
     }
 
@@ -260,7 +286,8 @@ public class GameManager : MonoBehaviour
         {
             gameWon = true;
             gameRunning = false;
-            levelText.text = "Level " + currentLevel + " complete\nPress enter.";
+            panelStatus.SetActive(true);
+            textStatus.text = "Level " + currentLevel + " complete\nPress enter.";
             return;
         }
 
@@ -300,7 +327,8 @@ public class GameManager : MonoBehaviour
             {
                 gameOver = true;
                 gameRunning = false;
-                levelText.text = "GAME OVER\nPress enter";
+                panelStatus.SetActive(true);
+                textStatus.text = "GAME OVER\nPress enter";
             }
             else
             {
@@ -325,7 +353,7 @@ public class GameManager : MonoBehaviour
         int viruses = GetNumberOfVirussesInMatches(matches);
         int matchScore = GetScoreForKilledViruses(viruses);
         score += matchScore;
-        scoreText.text = score.ToString();
+        textScore.text = score.ToString();
     }
 
     private int GetNumberOfVirussesInMatches(HashSet<Square> matches)
@@ -561,6 +589,7 @@ public class GameManager : MonoBehaviour
             if (item.GetType() == typeof(Virus))
             {
                 numberOfAliveViruses--;
+                UpdateVirusCounterUi();
             }
 
             GameObject.Destroy(item.gameObject);

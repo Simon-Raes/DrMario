@@ -13,14 +13,25 @@ public class LevelSettingsManager : MonoBehaviour
     [SerializeField]
     private Text textVirusLevel;
 
-    // [Header("Speed")]
-    
+    [Header("Speed")]
+    [SerializeField]
+    private Toggle toggleLow;
+    [SerializeField]
+    private Toggle toggleMid;
+    [SerializeField]
+    private Toggle toggleHi;
 
     // Use this for initialization
     void Start()
     {
         StateHolder.virusLevel = 0;
         sliderVirusLevel.onValueChanged.AddListener(delegate { ValueChangeCheck(); });
+
+        toggleLow.onValueChanged.AddListener(delegate { OnDifficultyToggled(); });
+        toggleMid.onValueChanged.AddListener(delegate { OnDifficultyToggled(); });
+        toggleHi.onValueChanged.AddListener(delegate { OnDifficultyToggled(); });
+        // Set initial state
+        OnDifficultyToggled();
     }
 
     // Update is called once per frame
@@ -38,7 +49,23 @@ public class LevelSettingsManager : MonoBehaviour
     {
         textVirusLevel.text = sliderVirusLevel.value.ToString();
 
-        int virusLevel = (int) sliderVirusLevel.value;
+        int virusLevel = (int)sliderVirusLevel.value;
         StateHolder.virusLevel = virusLevel;
+    }
+
+    private void OnDifficultyToggled()
+    {
+        if (toggleLow.isOn)
+        {
+            StateHolder.difficulty = Difficulty.LOW;
+        }
+        else if (toggleMid.isOn)
+        {
+            StateHolder.difficulty = Difficulty.MID;
+        }
+        else
+        {
+            StateHolder.difficulty = Difficulty.HI;
+        }
     }
 }
