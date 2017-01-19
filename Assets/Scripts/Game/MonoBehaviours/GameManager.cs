@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour  //, VirusSpawnListener
 {
     [Header("Game")]
     public int startLevel = 0;
@@ -78,7 +78,7 @@ public class GameManager : MonoBehaviour
 
         score = 0;
         textScore.text = score.ToString();
-    
+
         SetupBoardBorder();
 
         SetupGame();
@@ -158,6 +158,7 @@ public class GameManager : MonoBehaviour
 
     private void ResetUi()
     {
+        // TODO
         textTop.text = "TODO";
 
         textLevel.text = currentLevel.ToString();
@@ -165,8 +166,6 @@ public class GameManager : MonoBehaviour
         textVirus.text = "0";
     }
 
-    // TODO the real game will never spawn more than 3 viruses of the same color next to each other
-    // if you do you already get matches and virus kills before you even started playing
     private IEnumerator CreateViruses()
     {
         grid = new Square[width, height];
@@ -184,14 +183,22 @@ public class GameManager : MonoBehaviour
             if (grid[x, y] == null)
             {
                 Vector2 position = new Vector2(x, y);
-                grid[x, y] = GameObject.Instantiate(viruses[Random.Range(0, viruses.Length)], position, Quaternion.identity) as Virus;
+                Virus selectedVirus = viruses[Random.Range(0, viruses.Length)];
+                GameColor color = selectedVirus.gameColor;
 
-                virusesStillToPlace--;
-                numberOfAliveViruses++;
+                // Only add this virus if it will not create a 4-in-a-row match.
+                // If it would we loop around and try again with a new position and color.
+                if (!WouldCauseMatch(color, x, y))
+                {
+                    grid[x, y] = GameObject.Instantiate(selectedVirus, position, Quaternion.identity) as Virus;
 
-                UpdateVirusCounterUi();
+                    virusesStillToPlace--;
+                    numberOfAliveViruses++;
 
-                yield return new WaitForSeconds(VIRUSES_SPAWN_ANIMATION_DURATION_MILLIS / 1000f / totalNumberOfViruses);
+                    UpdateVirusCounterUi();
+
+                    yield return new WaitForSeconds(VIRUSES_SPAWN_ANIMATION_DURATION_MILLIS / 1000f / totalNumberOfViruses);
+                }
             }
         }
 
@@ -222,6 +229,94 @@ public class GameManager : MonoBehaviour
             return 3;
         }
     }
+
+    // Checks if adding a virus at this location would cause a match
+    private bool WouldCauseMatch(GameColor color, int x, int y)
+    {
+        return WouldCauseMatchHorizontal(color, x, y) || WouldCauseMatchVertical(color, x, y);
+    }
+
+    private bool WouldCauseMatchHorizontal(GameColor color, int x, int y)
+    {
+        return WouldCauseMatch(color, x, y, true);
+    }
+
+    private bool WouldCauseMatchVertical(GameColor color, int x, int y)
+    {
+        return WouldCauseMatch(color, x, y, false);
+    }
+
+    private bool WouldCauseMatch(GameColor color, int x, int y, bool horizontal)
+    {
+        int startPos;
+        int endPos;
+
+        if (horizontal)
+        {
+            startPos = Mathf.Max(0, x - 3);
+            endPos = Mathf.Min(width - 1, x + 3);
+        }
+        else
+        {
+            startPos = Mathf.Max(0, y - 3);
+            endPos = Mathf.Min(height - 1, y + 3);
+        }
+
+        int sameColorVirusesInRow = 0;
+
+
+        for (int i = startPos; i <= endPos; i++)
+        {
+            bool atCentralPosition = horizontal ? (i == x) : (i == y);
+
+            if (atCentralPosition)
+            {
+                sameColorVirusesInRow++;
+
+                if (sameColorVirusesInRow >= MIN_TILES_IN_MATCH)
+                {
+                    return true;
+                }
+
+                continue;
+            }
+
+            Square square;
+            if (horizontal)
+            {
+                square = grid[i, y];
+            }
+            else
+            {
+                square = grid[x, i];
+            }
+
+            if (square != null && IsVirus(square))
+            {
+                Virus virus = (Virus)square;
+                if (virus.gameColor == color)
+                {
+                    sameColorVirusesInRow++;
+
+                    if (sameColorVirusesInRow >= MIN_TILES_IN_MATCH)
+                {
+                    return true;
+                }
+                }
+                else
+                {
+                    sameColorVirusesInRow = 0;
+                }
+            }
+            else
+            {
+                sameColorVirusesInRow = 0;
+            }
+        }
+
+        return false;
+    }
+
 
     private void UpdateVirusCounterUi()
     {
@@ -361,7 +456,7 @@ public class GameManager : MonoBehaviour
         int count = 0;
         foreach (Square item in matches)
         {
-            if (item.GetType() == typeof(Virus))
+            if (IsVirus(item))
             {
                 count++;
             }
@@ -586,7 +681,7 @@ public class GameManager : MonoBehaviour
     {
         foreach (Square item in matches)
         {
-            if (item.GetType() == typeof(Virus))
+            if (IsVirus(item))
             {
                 numberOfAliveViruses--;
                 UpdateVirusCounterUi();
@@ -614,7 +709,7 @@ public class GameManager : MonoBehaviour
                     continue;
                 }
 
-                if (square.GetType() != typeof(PillPart))
+                if (!IsPillPart(square))
                 {
                     continue;
                 }
@@ -692,7 +787,7 @@ public class GameManager : MonoBehaviour
             return true;
         }
 
-        bool sqaureBelowIsFallingPill = squareBelow.GetType() == typeof(PillPart) && fallingPills.Contains((PillPart)squareBelow);
+        bool sqaureBelowIsFallingPill = IsPillPart(squareBelow) && fallingPills.Contains((PillPart)squareBelow);
         return sqaureBelowIsFallingPill;
     }
 
@@ -708,5 +803,17 @@ public class GameManager : MonoBehaviour
 
             pillPart.transform.position = new Vector2(currentX, currentY - 1);
         }
+    }
+
+    // TODO can't we do this cleaner? method/type on the object itself instead of checking type from the outside?
+
+    private bool IsVirus(Square square)
+    {
+        return square.GetType() == typeof(Virus);
+    }
+
+    private bool IsPillPart(Square square)
+    {
+        return square.GetType() == typeof(PillPart);
     }
 }
