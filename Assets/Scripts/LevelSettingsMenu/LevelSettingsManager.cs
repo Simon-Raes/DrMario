@@ -21,6 +21,10 @@ public class LevelSettingsManager : MonoBehaviour
     [SerializeField]
     private Toggle toggleHi;
 
+    [Header("Other")]
+    [SerializeField]
+    private Button buttonStart;
+
     // Use this for initialization
     void Start()
     {
@@ -30,6 +34,8 @@ public class LevelSettingsManager : MonoBehaviour
         toggleLow.onValueChanged.AddListener(delegate { OnDifficultyToggled(); });
         toggleMid.onValueChanged.AddListener(delegate { OnDifficultyToggled(); });
         toggleHi.onValueChanged.AddListener(delegate { OnDifficultyToggled(); });
+
+        buttonStart.onClick.AddListener(OnStartClicked);
         // Set initial state
         OnDifficultyToggled();
     }
@@ -39,8 +45,7 @@ public class LevelSettingsManager : MonoBehaviour
     {
         if (Input.GetKeyDown("return"))
         {
-            print("yes!");
-            SceneManager.LoadScene("MainGame");
+            StartGame();
         }
     }
 
@@ -67,5 +72,15 @@ public class LevelSettingsManager : MonoBehaviour
         {
             StateHolder.difficulty = Difficulty.HI;
         }
+    }
+
+    private void OnStartClicked()
+    {
+        StartGame();
+    }
+
+    private void StartGame()
+    {
+        SceneManager.LoadScene("MainGame");
     }
 }

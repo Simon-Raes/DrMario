@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
-public class BorderPlacer
+// Creates the border around the brid and adjusts the camera position to make sure everything fits on screen.
+// Also position UI here
+public class BoardDecorator
 {
     private int width;
     private int height;
@@ -8,7 +11,11 @@ public class BorderPlacer
     private GameObject pipe;
     private GameObject pipeCorner;
 
-    public BorderPlacer(int width, int height, GameObject pipe, GameObject pipeCorner)
+    private float paddingVertical = 1f;
+    private float rightSideUiWidth = 8f;
+    private float paddingHorizontal = 2f;
+
+    public BoardDecorator(int width, int height, GameObject pipe, GameObject pipeCorner)
     {
         this.width = width;
         this.height = height;
@@ -18,8 +25,18 @@ public class BorderPlacer
         this.pipeCorner = pipeCorner;
     }
 
-    public void CreateBorders()
+    public void Setup()
     {
+        SetupPipeBorders();
+
+        SetupCamera();
+
+        SetupHud();
+    }
+
+    private void SetupPipeBorders()
+    {
+
         // Horizontal pipes
         for (int i = 0; i < width; i++)
         {
@@ -83,5 +100,34 @@ public class BorderPlacer
         GameObject.Instantiate(pipeCorner, new Vector3(width + 3, height, 0), Quaternion.AngleAxis(270, Vector3.forward));
         GameObject.Instantiate(pipeCorner, new Vector3(width + 8, height - 4, 0), Quaternion.AngleAxis(90, Vector3.forward));
         GameObject.Instantiate(pipeCorner, new Vector3(width + 8, height, 0), Quaternion.AngleAxis(180, Vector3.forward));
+
+    }
+
+
+    private void SetupCamera()
+    {
+        float centerVertical = (-paddingVertical - 1f + height + 4f + paddingVertical) / 2f - .5f;
+        float viewPortHeight = paddingVertical + 1f + height + 4f + paddingVertical;
+
+        float centerHorizontal = (-paddingHorizontal + width + rightSideUiWidth + paddingHorizontal) / 2f - .5f;
+        float viewportWidth = paddingHorizontal + width + rightSideUiWidth + paddingHorizontal;
+
+        float ratio = Screen.width / (float)Screen.height;
+        viewportWidth = viewportWidth / ratio;
+
+        float viewportSize = Mathf.Max(viewportWidth, viewPortHeight) / 2f;
+
+        Camera.main.transform.position = new Vector3(centerHorizontal, centerVertical, -1);
+        Camera.main.orthographicSize = viewportSize;
+    }
+
+    private void SetupHud()
+    {
+        // todo move score to the top (next to the top opening)
+        // make the rest fit below the preview pill
+        // both should be world space UIs so they can be measured?
+        Vector3 ffse = Camera.main.WorldToScreenPoint(new Vector3(0, 0, 0));
+
+        float ewe = ffse.x;
     }
 }

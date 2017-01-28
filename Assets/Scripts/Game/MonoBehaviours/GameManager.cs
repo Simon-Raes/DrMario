@@ -17,6 +17,9 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
     public Virus[] viruses;
     public PillHolder pillHolder;
     [Header("UI")]
+    // public Camera camera;
+    public Canvas canvas;
+    public Canvas testCanvas;
     [Header("Game")]
     public GameObject panelStatus;
     public Text textStatus;
@@ -59,8 +62,6 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
 
     void Start()
     {
-        pillSpawnLocation = new Vector2(width / 2 - 1, height - 1);
-
         if (StateHolder.virusLevel != -1)
         {
             currentLevel = StateHolder.virusLevel;
@@ -74,6 +75,11 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
         {
             difficulty = StateHolder.difficulty;
         }
+
+        height = Mathf.Max(GetMinBoardHeight(), height);
+
+        pillSpawnLocation = new Vector2(width / 2 - 1, height - 1);
+
         SetTickRateForDifficulty();
 
         score = 0;
@@ -82,6 +88,22 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
         SetupBoardBorder();
 
         SetupGame();
+
+
+
+
+        RectTransform rectTransform = testCanvas.GetComponent<RectTransform>();
+
+        int pillPreviewHeight = 5;
+        int pillPreviewWidth = 6;
+
+        // TODO improve height positioning
+
+        int panelWidth = pillPreviewWidth;
+        int panelHeight = height + 2 - pillPreviewHeight;
+
+        rectTransform.position = new Vector3(width + 5.5f, (panelHeight - 2)/2, 0);
+        rectTransform.sizeDelta = new Vector2(panelWidth, panelHeight);
     }
 
     private void SetTickRateForDifficulty()
@@ -103,11 +125,11 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
 
     private void SetupBoardBorder()
     {
-        BorderPlacer borderPlacer = new BorderPlacer(width, height, pipe, pipeCorner);
-        borderPlacer.CreateBorders();
+        BoardDecorator decorator = new BoardDecorator(width, height, pipe, pipeCorner);
+        decorator.Setup();
     }
 
-    void SetupGame()
+    private void SetupGame()
     {
         CleanUpPreviousRound();
 
@@ -188,6 +210,8 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
 
                 // Only add this virus if it will not create a 4-in-a-row match.
                 // If it would we loop around and try again with a new position and color.
+                // TODO: this will create problems with small, maxed out boards.
+                // can more easily end up in a situation where a virus can not be placed anywhere.
                 if (!WouldCauseMatch(color, x, y))
                 {
                     grid[x, y] = GameObject.Instantiate(selectedVirus, position, Quaternion.identity) as Virus;
@@ -209,9 +233,17 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
     {
         // Number of viruses stops increasing after level 20
         int difficultyLevel = Mathf.Min(20, currentLevel);
-        return (difficultyLevel + 1) * 4;
+        int virusCount = (difficultyLevel + 1) * 4;
+
+        return Mathf.Min(virusCount, GetMaxVirusesForBoard());
     }
 
+    private int GetMaxVirusesForBoard()
+    {
+        return width * height - (width * GetVirusMinDistanceFromTopForCurrentLevel());
+    }
+
+    // The number of rows at the top of the board where no viruses can spawn. Decreases with difficulty.
     private int GetVirusMinDistanceFromTopForCurrentLevel()
     {
         int difficultyLevel = Mathf.Min(20, currentLevel);
@@ -229,6 +261,13 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
             return 3;
         }
     }
+
+    private int GetMinBoardHeight()
+    {
+        return GetVirusMinDistanceFromTopForCurrentLevel() + 1;
+    }
+
+
 
     // Checks if adding a virus at this location would cause a match
     private bool WouldCauseMatch(GameColor color, int x, int y)
@@ -299,9 +338,9 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
                     sameColorVirusesInRow++;
 
                     if (sameColorVirusesInRow >= MIN_TILES_IN_MATCH)
-                {
-                    return true;
-                }
+                    {
+                        return true;
+                    }
                 }
                 else
                 {
@@ -639,6 +678,7 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
         return matches;
     }
 
+    // TODO move to its own class
     public int GetScoreForKilledViruses(int virusesKilled)
     {
         /* 
