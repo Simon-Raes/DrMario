@@ -74,7 +74,7 @@ public class LevelSettingsManager : MonoBehaviour
         }
     }
 
-    private void OnStartClicked()
+    public void OnStartClicked()
     {
         StartGame();
     }

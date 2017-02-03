@@ -19,7 +19,7 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
     [Header("UI")]
     // public Camera camera;
     public Canvas canvas;
-    public Canvas testCanvas;
+    public RectTransform testPanel;
     [Header("Game")]
     public GameObject panelStatus;
     public Text textStatus;
@@ -92,7 +92,7 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
 
 
 
-        RectTransform rectTransform = testCanvas.GetComponent<RectTransform>();
+        RectTransform rectTransform = testPanel;
 
         int pillPreviewHeight = 5;
         int pillPreviewWidth = 6;
@@ -100,9 +100,9 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
         // TODO improve height positioning
 
         int panelWidth = pillPreviewWidth;
-        int panelHeight = height + 2 - pillPreviewHeight;
+        int panelHeight = height + 1 - pillPreviewHeight;
 
-        rectTransform.position = new Vector3(width + 5.5f, (panelHeight - 2)/2, 0);
+        rectTransform.position = new Vector3(width + 5.5f, (panelHeight - 2.5f)/2, 0);
         rectTransform.sizeDelta = new Vector2(panelWidth, panelHeight);
     }
 
