@@ -130,4 +130,9 @@ public class BoardDecorator
 
         float ewe = ffse.x;
     }
+
+    private void PlaceButtons()
+    {
+        
+    }
 }

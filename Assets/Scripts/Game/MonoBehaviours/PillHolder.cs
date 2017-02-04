@@ -56,46 +56,50 @@ public class PillHolder : MonoBehaviour
 
         if (Input.GetKey("left"))
         {
-            if (CanMoveLeft())
-            {
-                bool initialMovement = movementsDoneDuringHold == 0;
-                bool bigDelayMovement = movementsDoneDuringHold == 1 && (Time.time - MILLIS_BETWEEN_INITIAL_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
-                bool regularMovement = movementsDoneDuringHold > 1 && Time.time - (MILLIS_BETWEEN_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+            LeftPressed();
+            // if (CanMoveLeft())
+            // {
+            //     bool initialMovement = movementsDoneDuringHold == 0;
+            //     bool bigDelayMovement = movementsDoneDuringHold == 1 && (Time.time - MILLIS_BETWEEN_INITIAL_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+            //     bool regularMovement = movementsDoneDuringHold > 1 && Time.time - (MILLIS_BETWEEN_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
 
-                if (initialMovement || bigDelayMovement || regularMovement)
-                {
-                    MoveLeft();
-                }
-            }
+            //     if (initialMovement || bigDelayMovement || regularMovement)
+            //     {
+            //         MoveLeft();
+            //     }
+            // }
         }
         else if (Input.GetKeyUp("left") || Input.GetKeyUp("right"))
         {
-            movementsDoneDuringHold = 0;
+            DirectionInputReleased();
+            // movementsDoneDuringHold = 0;
         }
         else if (Input.GetKey("right"))
         {
-            if (CanMoveRight())
-            {
-                bool initialMovement = movementsDoneDuringHold == 0;
-                bool bigDelayMovement = movementsDoneDuringHold == 1 && (Time.time - MILLIS_BETWEEN_INITIAL_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
-                bool regularMovement = movementsDoneDuringHold > 1 && Time.time - (MILLIS_BETWEEN_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+            RightPressed();
+            // if (CanMoveRight())
+            // {
+            //     bool initialMovement = movementsDoneDuringHold == 0;
+            //     bool bigDelayMovement = movementsDoneDuringHold == 1 && (Time.time - MILLIS_BETWEEN_INITIAL_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+            //     bool regularMovement = movementsDoneDuringHold > 1 && Time.time - (MILLIS_BETWEEN_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
 
-                if (initialMovement || bigDelayMovement || regularMovement)
-                {
-                    MoveRight();
-                }
-            }
+            //     if (initialMovement || bigDelayMovement || regularMovement)
+            //     {
+            //         MoveRight();
+            //     }
+            // }
         }
         else if (Input.GetKey("down"))
         {
-            bool canMoveAgain = (Time.time - MILLIS_BETWEEN_MOVEMENT_DOWN / 1000f) > lastDownPress;
-            if (canMoveAgain)
-            {
-                lastDownPress = Time.time;
-                MoveDownOrSettle();
-            }
+            DownPressed();
+            // bool canMoveAgain = (Time.time - MILLIS_BETWEEN_MOVEMENT_DOWN / 1000f) > lastDownPress;
+            // if (canMoveAgain)
+            // {
+            //     lastDownPress = Time.time;
+            //     MoveDownOrSettle();
+            // }
         }
-        
+
         if (Input.GetKeyDown("z"))
         {
             RotateClockwise();
@@ -103,6 +107,51 @@ public class PillHolder : MonoBehaviour
         else if (Input.GetKeyDown("x"))
         {
             RotateCounterClockwise();
+        }
+    }
+
+    public void LeftPressed()
+    {
+        if (CanMoveLeft())
+        {
+            bool initialMovement = movementsDoneDuringHold == 0;
+            bool bigDelayMovement = movementsDoneDuringHold == 1 && (Time.time - MILLIS_BETWEEN_INITIAL_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+            bool regularMovement = movementsDoneDuringHold > 1 && Time.time - (MILLIS_BETWEEN_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+
+            if (initialMovement || bigDelayMovement || regularMovement)
+            {
+                MoveLeft();
+            }
+        }
+    }
+
+    public void RightPressed()
+    {
+        if (CanMoveRight())
+        {
+            bool initialMovement = movementsDoneDuringHold == 0;
+            bool bigDelayMovement = movementsDoneDuringHold == 1 && (Time.time - MILLIS_BETWEEN_INITIAL_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+            bool regularMovement = movementsDoneDuringHold > 1 && Time.time - (MILLIS_BETWEEN_MOVEMENT_SIDEWAYS / 1000f) > lastLeftPress;
+
+            if (initialMovement || bigDelayMovement || regularMovement)
+            {
+                MoveRight();
+            }
+        }
+    }
+
+    public void DirectionInputReleased()
+    {
+        movementsDoneDuringHold = 0;
+    }
+
+    public void DownPressed()
+    {
+        bool canMoveAgain = (Time.time - MILLIS_BETWEEN_MOVEMENT_DOWN / 1000f) > lastDownPress;
+        if (canMoveAgain)
+        {
+            lastDownPress = Time.time;
+            MoveDownOrSettle();
         }
     }
 
@@ -224,7 +273,7 @@ public class PillHolder : MonoBehaviour
         gameManager.SetPillSettled();
     }
 
-    private void RotateClockwise()
+    public void RotateClockwise()
     {
         Vector2 newMain, newSecondary;
 
@@ -289,7 +338,7 @@ public class PillHolder : MonoBehaviour
         UpdatePillRotations();
     }
 
-    private void RotateCounterClockwise()
+    public void RotateCounterClockwise()
     {
         Vector2 newMain, newSecondary;
 

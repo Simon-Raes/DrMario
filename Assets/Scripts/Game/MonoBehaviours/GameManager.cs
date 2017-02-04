@@ -19,7 +19,9 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
     [Header("UI")]
     // public Camera camera;
     public Canvas canvas;
-    public RectTransform testPanel;
+    public RectTransform levelPanel;
+    public RectTransform statusPanel;
+    public RectTransform scorePanel;
     [Header("Game")]
     public GameObject panelStatus;
     public Text textStatus;
@@ -92,18 +94,38 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
 
 
 
-        RectTransform rectTransform = testPanel;
+
+        // UI stuff that needs to move
+
+        panelStatus.SetActive(false);
+
+        RectTransform rectTransform = levelPanel;
 
         int pillPreviewHeight = 5;
         int pillPreviewWidth = 6;
-
-        // TODO improve height positioning
 
         int panelWidth = pillPreviewWidth;
         int panelHeight = height + 1 - pillPreviewHeight;
 
         rectTransform.position = new Vector3(width + 5.5f, (panelHeight - 2.5f)/2, 0);
         rectTransform.sizeDelta = new Vector2(panelWidth, panelHeight);
+
+
+        RectTransform rectTransformStatus = statusPanel;
+
+        int statusPanelWidth = width - 1;
+        rectTransformStatus.position = new Vector3(width / 2 -.5f, height/2, 0); //- statusPanelWidth / 2
+        rectTransformStatus.sizeDelta = new Vector2(statusPanelWidth, 8);
+
+
+
+
+
+        RectTransform rectTransformScore = scorePanel;
+
+        int scorePanelWidth = 8 + 8;
+        rectTransformScore.position = new Vector3(8, 20); //- statusPanelWidth / 2
+        rectTransformScore.sizeDelta = new Vector2(scorePanelWidth, 4);
     }
 
     private void SetTickRateForDifficulty()
@@ -197,6 +219,12 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
 
         numberOfAliveViruses = 0;
 
+        float spawnInterval = VIRUSES_SPAWN_ANIMATION_DURATION_MILLIS / 1000f / totalNumberOfViruses;
+        print(spawnInterval + " for " + totalNumberOfViruses);
+        print((spawnInterval * totalNumberOfViruses));
+        WaitForSeconds waitForSeconds = new WaitForSeconds(spawnInterval);
+        print(Time.time);
+
         while (virusesStillToPlace > 0)
         {
             int x = Random.Range(0, width);
@@ -221,10 +249,13 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
 
                     UpdateVirusCounterUi();
 
-                    yield return new WaitForSeconds(VIRUSES_SPAWN_ANIMATION_DURATION_MILLIS / 1000f / totalNumberOfViruses);
+                    // yield return waitForSeconds;
+                    yield return null;
                 }
             }
         }
+
+        print(Time.time);
 
         SetupDone();
     }
@@ -390,7 +421,7 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
             Tick();
         }
 
-        if (Input.GetKeyDown("return"))
+        if (Input.GetKeyDown("return") || Input.GetMouseButtonDown(0))
         {
             if (gameWon)
             {
@@ -421,7 +452,7 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
             gameWon = true;
             gameRunning = false;
             panelStatus.SetActive(true);
-            textStatus.text = "Level " + currentLevel + " complete\nPress enter.";
+            textStatus.text = "Level " + currentLevel + " complete\nTap to continue";
             return;
         }
 
@@ -855,5 +886,10 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
     private bool IsPillPart(Square square)
     {
         return square.GetType() == typeof(PillPart);
+    }
+
+    public PillHolder GetActivePillHolder()
+    {
+        return activePillHolder;
     }
 }
