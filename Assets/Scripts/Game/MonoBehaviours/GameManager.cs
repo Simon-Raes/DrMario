@@ -85,49 +85,9 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
         score = 0;
         textScore.text = score.ToString();
 
-        SetupBoardBorder();
+        SetupCameraAndUi();
 
         SetupGame();
-
-
-
-
-
-        // UI stuff that needs to move
-
-        // panelStatus.SetActive(false);
-
-        // RectTransform rectTransform = levelPanel;
-
-        // int pillPreviewHeight = 5;
-        // int pillPreviewWidth = 6;
-
-        // int panelWidth = pillPreviewWidth;
-        // int panelHeight = height + 1 - pillPreviewHeight;
-
-        // rectTransform.position = new Vector3(width + 5.5f, (panelHeight - 2.5f)/2, 0);
-        // rectTransform.sizeDelta = new Vector2(panelWidth, panelHeight);
-
-
-        // RectTransform rectTransformStatus = statusPanel;
-
-        // int statusPanelWidth = width - 1;
-        // rectTransformStatus.position = new Vector3(width / 2 -.5f, height/2, 0); //- statusPanelWidth / 2
-        // rectTransformStatus.sizeDelta = new Vector2(statusPanelWidth, 8);
-
-
-
-
-
-        // RectTransform rectTransformScore = scorePanel;
-
-        // int scorePanelWidth = 8 + 8;
-        // rectTransformScore.position = new Vector3(8, 20); //- statusPanelWidth / 2
-        // rectTransformScore.sizeDelta = new Vector2(scorePanelWidth, 4);
-
-
-
-
     }
 
     private void SetTickRateForDifficulty()
@@ -147,12 +107,10 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
         }
     }
 
-    private void SetupBoardBorder()
+    private void SetupCameraAndUi()
     {
-        // BoardDecorator decorator = new BoardDecorator(width, height, pipe, pipeCorner);
         BoardDecorator decorator = GetComponent<BoardDecorator>();
         decorator.SetValues(width, height, pipe, pipeCorner);
-        // decorator.Setup();
     }
 
     private void SetupGame()

@@ -1,10 +1,11 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 // Creates the border around the brid and adjusts the camera position to make sure everything fits on screen.
 // Also position UI here
 [RequireComponent(typeof(GameManager))]
-public class BoardDecorator : MonoBehaviour
+public class BoardDecorator : MonoBehaviour, ResizeListener.UiResizedListener
 {
     private int width;
     private int height;
@@ -36,6 +37,14 @@ public class BoardDecorator : MonoBehaviour
 
     private enum Orientation { PORTRAIT, LANDSCAPE };
 
+    void Awake()
+    {
+        ResizeListener resizeListener = FindObjectOfType(typeof(ResizeListener)) as ResizeListener;
+        resizeListener.AddListener(this);
+
+        panelStatus.SetActive(false);
+    }
+
     public void SetValues(int width, int height, GameObject pipe, GameObject pipeCorner)
     {
         this.width = width;
@@ -48,10 +57,24 @@ public class BoardDecorator : MonoBehaviour
         Setup();
     }
 
+
+
     public void Setup()
     {
         SetupPipeBorders();
 
+
+
+        SetupUiAndCamera();
+    }
+
+    public void OnUiResized()
+    {
+        SetupUiAndCamera();
+    }
+
+    private void SetupUiAndCamera()
+    {
         SetupCamera();
 
         PlaceHud();
@@ -213,7 +236,7 @@ public class BoardDecorator : MonoBehaviour
 
     private void PlaceStatusPanel()
     {
-        panelStatus.SetActive(false);
+
 
         RectTransform rectTransformStatus = statusPanel;
 
@@ -284,4 +307,6 @@ public class BoardDecorator : MonoBehaviour
         rectTransformRotation.position = new Vector3(rotationPanelX, rotationPanelY, 0);
         rectTransformRotation.sizeDelta = new Vector2(rotationPanelWidth, rotationPanelHeight);
     }
+
+
 }
