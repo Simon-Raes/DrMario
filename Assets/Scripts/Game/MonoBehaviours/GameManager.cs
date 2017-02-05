@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
+[RequireComponent(typeof(BoardDecorator))]
 public class GameManager : MonoBehaviour  //, VirusSpawnListener
 {
     [Header("Game")]
@@ -16,12 +16,10 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
     [Header("Entities")]
     public Virus[] viruses;
     public PillHolder pillHolder;
-    [Header("UI")]
-    // public Camera camera;
-    public Canvas canvas;
-    public RectTransform levelPanel;
-    public RectTransform statusPanel;
-    public RectTransform scorePanel;
+    // [Header("UI")]
+    // public RectTransform levelPanel;
+    // public RectTransform statusPanel;
+    // public RectTransform scorePanel;
     [Header("Game")]
     public GameObject panelStatus;
     public Text textStatus;
@@ -97,35 +95,39 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
 
         // UI stuff that needs to move
 
-        panelStatus.SetActive(false);
+        // panelStatus.SetActive(false);
 
-        RectTransform rectTransform = levelPanel;
+        // RectTransform rectTransform = levelPanel;
 
-        int pillPreviewHeight = 5;
-        int pillPreviewWidth = 6;
+        // int pillPreviewHeight = 5;
+        // int pillPreviewWidth = 6;
 
-        int panelWidth = pillPreviewWidth;
-        int panelHeight = height + 1 - pillPreviewHeight;
+        // int panelWidth = pillPreviewWidth;
+        // int panelHeight = height + 1 - pillPreviewHeight;
 
-        rectTransform.position = new Vector3(width + 5.5f, (panelHeight - 2.5f)/2, 0);
-        rectTransform.sizeDelta = new Vector2(panelWidth, panelHeight);
-
-
-        RectTransform rectTransformStatus = statusPanel;
-
-        int statusPanelWidth = width - 1;
-        rectTransformStatus.position = new Vector3(width / 2 -.5f, height/2, 0); //- statusPanelWidth / 2
-        rectTransformStatus.sizeDelta = new Vector2(statusPanelWidth, 8);
+        // rectTransform.position = new Vector3(width + 5.5f, (panelHeight - 2.5f)/2, 0);
+        // rectTransform.sizeDelta = new Vector2(panelWidth, panelHeight);
 
 
+        // RectTransform rectTransformStatus = statusPanel;
+
+        // int statusPanelWidth = width - 1;
+        // rectTransformStatus.position = new Vector3(width / 2 -.5f, height/2, 0); //- statusPanelWidth / 2
+        // rectTransformStatus.sizeDelta = new Vector2(statusPanelWidth, 8);
 
 
 
-        RectTransform rectTransformScore = scorePanel;
 
-        int scorePanelWidth = 8 + 8;
-        rectTransformScore.position = new Vector3(8, 20); //- statusPanelWidth / 2
-        rectTransformScore.sizeDelta = new Vector2(scorePanelWidth, 4);
+
+        // RectTransform rectTransformScore = scorePanel;
+
+        // int scorePanelWidth = 8 + 8;
+        // rectTransformScore.position = new Vector3(8, 20); //- statusPanelWidth / 2
+        // rectTransformScore.sizeDelta = new Vector2(scorePanelWidth, 4);
+
+
+
+
     }
 
     private void SetTickRateForDifficulty()
@@ -147,8 +149,10 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
 
     private void SetupBoardBorder()
     {
-        BoardDecorator decorator = new BoardDecorator(width, height, pipe, pipeCorner);
-        decorator.Setup();
+        // BoardDecorator decorator = new BoardDecorator(width, height, pipe, pipeCorner);
+        BoardDecorator decorator = GetComponent<BoardDecorator>();
+        decorator.SetValues(width, height, pipe, pipeCorner);
+        // decorator.Setup();
     }
 
     private void SetupGame()
@@ -206,7 +210,7 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
         textTop.text = "TODO";
 
         textLevel.text = currentLevel.ToString();
-        textSpeed.text = difficulty.ToString();
+
         textVirus.text = "0";
     }
 
@@ -452,7 +456,7 @@ public class GameManager : MonoBehaviour  //, VirusSpawnListener
             gameWon = true;
             gameRunning = false;
             panelStatus.SetActive(true);
-            textStatus.text = "Level " + currentLevel + " complete\nTap to continue";
+            textStatus.text = "Level " + currentLevel + " complete\nTap  to continue";
             return;
         }
 

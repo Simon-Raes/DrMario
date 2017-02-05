@@ -3,7 +3,8 @@ using UnityEngine.UI;
 
 // Creates the border around the brid and adjusts the camera position to make sure everything fits on screen.
 // Also position UI here
-public class BoardDecorator
+[RequireComponent(typeof(GameManager))]
+public class BoardDecorator : MonoBehaviour
 {
     private int width;
     private int height;
@@ -14,8 +15,28 @@ public class BoardDecorator
     private float paddingVertical = 1f;
     private float rightSideUiWidth = 8f;
     private float paddingHorizontal = 2f;
+    private float paddingButtons = 1;
 
-    public BoardDecorator(int width, int height, GameObject pipe, GameObject pipeCorner)
+    [Header("UI")]
+    public RectTransform levelPanel;
+    public RectTransform statusPanel;
+    public RectTransform scorePanel;
+    public RectTransform movementPanel;
+    public RectTransform rotationPanel;
+    // this one is now referenced here and in gamemanager, not ideal?
+    public GameObject panelStatus;
+
+    float cameraLeft = 0;
+    float cameraRight = 0;
+
+    float movementPanelWidth = 9;
+    float movementPanelHeight = 3;
+    float rotationPanelWidth = 6;
+    float rotationPanelHeight = 3;
+
+    private enum Orientation { PORTRAIT, LANDSCAPE };
+
+    public void SetValues(int width, int height, GameObject pipe, GameObject pipeCorner)
     {
         this.width = width;
         this.height = height;
@@ -23,6 +44,8 @@ public class BoardDecorator
 
         this.pipe = pipe;
         this.pipeCorner = pipeCorner;
+
+        Setup();
     }
 
     public void Setup()
@@ -31,7 +54,9 @@ public class BoardDecorator
 
         SetupCamera();
 
-        SetupHud();
+        PlaceHud();
+
+        PlaceButtons();
     }
 
     private void SetupPipeBorders()
@@ -68,14 +93,13 @@ public class BoardDecorator
         GameObject.Instantiate(pipe, new Vector3(boardCenter - 2, height + 1, 0), Quaternion.identity);
         GameObject.Instantiate(pipe, new Vector3(boardCenter + 1, height + 1, 0), Quaternion.identity);
 
-        GameObject.Instantiate(pipeCorner, new Vector3(boardCenter - 2, height + 2, 0), Quaternion.AngleAxis(180, Vector3.forward));
-        GameObject.Instantiate(pipeCorner, new Vector3(boardCenter + 1, height + 2, 0), Quaternion.AngleAxis(270, Vector3.forward));
-
-        GameObject.Instantiate(pipeCorner, new Vector3(boardCenter - 3, height + 2, 0), Quaternion.identity);
-        GameObject.Instantiate(pipeCorner, new Vector3(boardCenter + 2, height + 2, 0), Quaternion.AngleAxis(90, Vector3.forward));
-
-        GameObject.Instantiate(pipe, new Vector3(boardCenter - 3, height + 3, 0), Quaternion.identity);
-        GameObject.Instantiate(pipe, new Vector3(boardCenter + 2, height + 3, 0), Quaternion.identity);
+        // Top pipes from original game, ugly and take up too much space
+        // GameObject.Instantiate(pipeCorner, new Vector3(boardCenter - 2, height + 2, 0), Quaternion.AngleAxis(180, Vector3.forward));
+        // GameObject.Instantiate(pipeCorner, new Vector3(boardCenter + 1, height + 2, 0), Quaternion.AngleAxis(270, Vector3.forward));
+        // GameObject.Instantiate(pipeCorner, new Vector3(boardCenter - 3, height + 2, 0), Quaternion.identity);
+        // GameObject.Instantiate(pipeCorner, new Vector3(boardCenter + 2, height + 2, 0), Quaternion.AngleAxis(90, Vector3.forward));
+        // GameObject.Instantiate(pipe, new Vector3(boardCenter - 3, height + 3, 0), Quaternion.identity);
+        // GameObject.Instantiate(pipe, new Vector3(boardCenter + 2, height + 3, 0), Quaternion.identity);
 
         // Around pill preview
         GameObject.Instantiate(pipe, new Vector3(width + 3, height - 3), Quaternion.identity);
@@ -106,33 +130,158 @@ public class BoardDecorator
 
     private void SetupCamera()
     {
-        float centerVertical = (-paddingVertical - 1f + height + 4f + paddingVertical) / 2f - .5f;
-        float viewPortHeight = paddingVertical + 1f + height + 4f + paddingVertical;
+        Orientation orienation = GetOrientation();
+        float extraWidthForUi = orienation == Orientation.LANDSCAPE ? movementPanelWidth + (paddingButtons * 2) * 2 : 0;
+        float extraHeightForUi = orienation == Orientation.PORTRAIT ? movementPanelHeight + (paddingButtons * 2) : 0;
+
+        float contentHeight = paddingVertical + 2f + height + 4f + paddingVertical + extraHeightForUi;
+        float centerVertical = (contentHeight) / 2f - extraHeightForUi - 2;
 
         float centerHorizontal = (-paddingHorizontal + width + rightSideUiWidth + paddingHorizontal) / 2f - .5f;
-        float viewportWidth = paddingHorizontal + width + rightSideUiWidth + paddingHorizontal;
+        float contentWidth = paddingHorizontal + width + rightSideUiWidth + paddingHorizontal + extraWidthForUi;
 
-        float ratio = Screen.width / (float)Screen.height;
-        viewportWidth = viewportWidth / ratio;
+        float ratio = GetRatio();
+        float viewPortWidth = contentWidth / ratio;
 
-        float viewportSize = Mathf.Max(viewportWidth, viewPortHeight) / 2f;
+        float viewportSize = Mathf.Max(viewPortWidth, contentHeight) / 2f;
 
         Camera.main.transform.position = new Vector3(centerHorizontal, centerVertical, -1);
         Camera.main.orthographicSize = viewportSize;
+
+        cameraLeft = centerHorizontal - contentWidth / 2f;
+        cameraRight = centerHorizontal + contentWidth / 2f;
+
+
+        float cameraSize = Camera.main.orthographicSize;
+        float www = cameraSize * GetRatio();
+        print("actually " + cameraSize);
+        print("actually " + www);
+        // print("actually " + viewportSize);
+
+
     }
 
-    private void SetupHud()
+    // todo could cache this value and invalidate it when necessary
+    private Orientation GetOrientation()
     {
-        // todo move score to the top (next to the top opening)
-        // make the rest fit below the preview pill
-        // both should be world space UIs so they can be measured?
-        Vector3 ffse = Camera.main.WorldToScreenPoint(new Vector3(0, 0, 0));
+        float ratio = Screen.width / (float)Screen.height;
+        return ratio > 1 ? Orientation.LANDSCAPE : Orientation.PORTRAIT;
+    }
 
-        float ewe = ffse.x;
+    private float GetRatio()
+    {
+        return Screen.width / (float)Screen.height;
+    }
+
+
+    private void PlaceHud()
+    {
+        PlaceLevelPanel();
+        PlaceScorePanel();
+        PlaceStatusPanel();
+    }
+
+    private void PlaceLevelPanel()
+    {
+        RectTransform rectTransform = levelPanel;
+
+        int pillPreviewHeight = 5;
+        int pillPreviewWidth = 6;
+
+        int panelWidth = pillPreviewWidth;
+        int panelHeight = height + 1 - pillPreviewHeight;
+
+        rectTransform.position = new Vector3(width + 5.5f, (panelHeight - 2.5f) / 2, 0);
+        rectTransform.sizeDelta = new Vector2(panelWidth, panelHeight);
+    }
+
+    private void PlaceScorePanel()
+    {
+        RectTransform rectTransformScore = scorePanel;
+
+        // TODO figure out how we can calculate this width
+        float mainContentWidth = paddingHorizontal + width + rightSideUiWidth + paddingHorizontal;
+        // float width = (Mathf.Abs(cameraLeft) + Mathf.Abs(cameraRight)) /2; it ain't this
+
+        float panelWidth = mainContentWidth - 2 * paddingButtons;
+        float panelHeight = 4;
+
+        // TODO figure out why I need this -2.5f here
+        rectTransformScore.position = new Vector3(mainContentWidth / 2 - 2.5f, height + 4);
+        rectTransformScore.sizeDelta = new Vector2(panelWidth, panelHeight);
+    }
+
+    private void PlaceStatusPanel()
+    {
+        panelStatus.SetActive(false);
+
+        RectTransform rectTransformStatus = statusPanel;
+
+        int statusPanelWidth = width - 1;
+        rectTransformStatus.position = new Vector3(width / 2 - .5f, height / 2, 0); //- statusPanelWidth / 2
+        rectTransformStatus.sizeDelta = new Vector2(statusPanelWidth, 8);
     }
 
     private void PlaceButtons()
     {
-        
+        PlaceMovementButtons();
+        PlaceRotationButtons();
+    }
+
+    private void PlaceMovementButtons()
+    {
+
+        float movementPanelX;
+        float movementPanelY;
+
+        RectTransform rectTransformMovement = movementPanel;
+
+        if (GetOrientation() == Orientation.PORTRAIT)
+        {
+            // Below the board
+            movementPanelX = cameraLeft + movementPanelWidth / 2 + paddingButtons;
+            movementPanelY = -movementPanelHeight - paddingButtons;
+        }
+        else
+        {
+            // To the left and right of it
+
+            float cameraSize = Camera.main.orthographicSize;
+            float www = cameraSize * GetRatio();
+
+            movementPanelX = Camera.main.transform.position.x - www + movementPanelWidth / 2;
+            movementPanelY = Camera.main.transform.position.y;
+        }
+
+        rectTransformMovement.position = new Vector3(movementPanelX, movementPanelY, 0);
+        rectTransformMovement.sizeDelta = new Vector2(movementPanelWidth, movementPanelHeight);
+    }
+
+    private void PlaceRotationButtons()
+    {
+
+        float rotationPanelX;
+        float rotationPanelY;
+
+        RectTransform rectTransformRotation = rotationPanel;
+
+        if (GetOrientation() == Orientation.PORTRAIT)
+        {
+            // Below the board
+            rotationPanelX = cameraRight - (rotationPanelWidth / 2 + paddingButtons);
+            rotationPanelY = -rotationPanelHeight - paddingButtons;
+        }
+        else
+        {
+            // To the left and right of it
+            float cameraSize = Camera.main.orthographicSize;
+            float www = cameraSize * GetRatio();
+
+            rotationPanelX = Camera.main.transform.position.x + www - movementPanelWidth / 2; ;
+            rotationPanelY = Camera.main.transform.position.y;
+        }
+
+        rectTransformRotation.position = new Vector3(rotationPanelX, rotationPanelY, 0);
+        rectTransformRotation.sizeDelta = new Vector2(rotationPanelWidth, rotationPanelHeight);
     }
 }
